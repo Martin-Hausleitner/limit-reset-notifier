@@ -10,6 +10,22 @@ cd "$ROOT"
 if [ -f .env.deploy ]; then set -a; . ./.env.deploy; set +a; fi
 export DASHBOARD_URL="${DASHBOARD_URL:-}"
 
+# self-heal the public URL: cloudflared quick-tunnel URLs change on restart, so
+# discover the live one from the host and persist it (best-effort; offline-safe).
+if [ -n "${VCVM_HOST:-}" ]; then
+  LIVE_URL="$(ssh -o BatchMode=yes -o ConnectTimeout=8 "$VCVM_HOST" \
+    'journalctl -u limit-reset-tunnel --no-pager 2>/dev/null | grep -oE "https://[a-z0-9-]+\.trycloudflare\.com" | tail -1' 2>/dev/null || true)"
+  if [ -n "$LIVE_URL" ] && [ "$LIVE_URL" != "${DASHBOARD_URL:-}" ]; then
+    export DASHBOARD_URL="$LIVE_URL"
+    if [ -f .env.deploy ]; then
+      grep -v '^DASHBOARD_URL=' .env.deploy > .env.deploy.tmp 2>/dev/null || true
+      printf 'DASHBOARD_URL=%s\n' "$LIVE_URL" >> .env.deploy.tmp
+      mv .env.deploy.tmp .env.deploy && chmod 600 .env.deploy
+    fi
+    echo "↻ dashboard URL refreshed: $LIVE_URL"
+  fi
+fi
+
 node src/collect.mjs
 node src/detect.mjs "$@"
 node src/notify-matrix.mjs || echo "(notify skipped/failed — see above)"

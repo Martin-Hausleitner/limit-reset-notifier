@@ -94,6 +94,15 @@ Get the current tunnel URL any time:
 bash deploy/tunnel-url.sh        # ssh-es in and greps the journal
 ```
 
+### Tests
+
+```bash
+node --test            # unit tests for the reset-detection core (src/lib/detect-core.mjs)
+```
+
+Covers: a genuine reset fires exactly one real event; mid‑window usage increases don't;
+a freshly‑rolled-but-still-busy window doesn't; and the same reset is never notified twice.
+
 ## Proof / end‑to‑end evidence
 
 | File | Shows |
@@ -112,8 +121,10 @@ Public reachability was independently confirmed from outside the Tailnet (the da
   (mode 600) and in your local `.env.deploy` (gitignored). Change them with
   `systemctl edit`/redeploy.
 * cloudflared **quick tunnels are ephemeral** — the `*.trycloudflare.com` URL changes whenever
-  the tunnel restarts (e.g. on reboot). For a permanent URL, run a *named* tunnel with your own
-  Cloudflare domain (`cloudflared tunnel create` + a `config.yml`) and point the systemd unit at it.
+  the tunnel restarts (e.g. on reboot). `run.sh` **auto-discovers the live URL** at runtime and
+  rewrites `.env.deploy`, so Matrix notifications always link the current dashboard. For a fixed
+  URL, run a *named* tunnel with your own Cloudflare domain (`cloudflared tunnel create` + a
+  `config.yml`) and point the systemd unit at it.
 * This tool never exposes your Matrix homeserver or your real rooms publicly — only its own
   KPI dashboard.
 

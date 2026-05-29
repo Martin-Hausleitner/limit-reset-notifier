@@ -1,12 +1,12 @@
 {
-  "sentAt": "2026-05-29T21:50:45.539Z",
+  "sentAt": "2026-05-29T22:01:33.111Z",
   "homeserver": "https://vcvm.tail6a40cd.ts.net:3443",
   "sender": "@openclaw:100.120.120.120",
   "room_id": "!IlLldWiwPYWgJXTrfB:100.120.120.120",
-  "event_id": "$h9CmCw2oRfm71tl7tZi91jAXGpYSgKyXsSHAV8x0tPY",
-  "bodyPlain": "🧪 TEST — Limit-Reset (Demo) — 29.05., 23:50 · MHs-MacBook-Pro.local\n\n✅ Codex (gpt-5.5) · Wochenlimit zurückgesetzt → 100% frei\n\nVerfügbares Kontingent (wie viel du verbrauchen kannst):\n• Claude Code\n   - Session-Limit (5h): 100% frei · bereits zurückgesetzt\n   - Opus-Wochenlimit: 91% frei · Reset in 54h 9m (01.06., 06:00)\n   - Wochenlimit: 77% frei · Reset in 54h 9m (01.06., 06:00)\n• Codex (gpt-5.5)\n   - Session-Limit (5h): 100% frei · Reset in 4h 26m (30.05., 04:17)\n   - Wochenlimit: 13% frei · Reset in 23h 42m (30.05., 23:32)\n\nVerbrauch heute (ca.): Codex 15 Mio Tok · Claude 99,6 Mio Tok / $57.99\n\nLive-Dashboard: https://mpg-mon-bull-austin.trycloudflare.com",
+  "event_id": "$icr0gUxUEw7sPL11nUoeHdVAzbbbaek0iB3Ct4Kre0g",
+  "bodyPlain": "🧪 TEST — Limit-Reset (Demo) — 30.05., 00:01 · MHs-MacBook-Pro.local\n\n✅ Codex (gpt-5.5) · Wochenlimit zurückgesetzt → 100% frei\n\nVerfügbares Kontingent (wie viel du verbrauchen kannst):\n• Claude Code\n   - Session-Limit (5h): 100% frei · bereits zurückgesetzt\n   - Opus-Wochenlimit: 90% frei · Reset in 53h 58m (01.06., 06:00)\n   - Wochenlimit: 77% frei · Reset in 53h 58m (01.06., 06:00)\n• Codex (gpt-5.5)\n   - Session-Limit (5h): 100% frei · Reset in 4h 16m (30.05., 04:17)\n   - Wochenlimit: 13% frei · Reset in 23h 31m (30.05., 23:32)\n\nVerbrauch heute (ca.): Codex 0 Mio Tok · Claude 0 Mio Tok / $0\n\nLive-Dashboard: https://mpg-mon-bull-austin.trycloudflare.com",
   "readbackEventType": "m.room.message",
   "readbackSender": "@openclaw:100.120.120.120",
-  "readbackOriginTs": 1780091411601,
+  "readbackOriginTs": 1780092059101,
   "dashboard": "https://mpg-mon-bull-austin.trycloudflare.com"
 }
