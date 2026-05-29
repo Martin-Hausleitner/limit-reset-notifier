@@ -98,8 +98,12 @@
                 const reset = w.expired
                   ? `<span class="badge ok">bereits frei</span>`
                   : `<span class="sub">Reset in <b data-reset="${w.resetsAt}">${cd(secs)}</b> · ${local(w.resetsAt)}</span>`;
+                const burnTxt =
+                  !w.expired && w.burnPerHour != null && w.burnPerHour > 0.05
+                    ? `<br><span class="sub" style="color:${w.exhaustsBeforeReset ? "var(--amber)" : "var(--dim)"}">🔥 ${w.burnPerHour}%/h ${w.exhaustsBeforeReset ? "→ Limit ~" + local(w.exhaustionAt) : "· reicht bis Reset ✓"}</span>`
+                    : "";
                 return `<div class="win">
-                    <div><span class="name">${w.label}</span><br>${reset}</div>
+                    <div><span class="name">${w.label}</span><br>${reset}${burnTxt}</div>
                     <div class="free"><b style="color:${color(w.remainingPercent)}">${w.remainingPercent}%</b><br><span class="sub">frei · ${w.usedPercent}% genutzt</span></div>
                     <div class="bar"><span style="width:${w.usedPercent}%;background:${color(w.remainingPercent)}"></span></div>
                   </div>`;

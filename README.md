@@ -15,7 +15,9 @@ how much quota you have left across **Claude Code** and **OpenAI Codex**.
 
 1. **Collects** the current rate‑limit windows for each provider (session / weekly / Opus)
    straight from CodexBar's local history — `usedPercent` + `resetsAt` per window — plus an
-   approximate "tokens used today" figure.
+   approximate "tokens used today" figure. It also estimates a **burn rate** (recent %/h) and
+   projects when each window would be exhausted at the current pace ("reicht bis Reset" vs.
+   a concrete time).
 2. **Detects a reset**: a window rolled into a new `resetsAt` *and* usage fell back to ~0.
 3. **Notifies** you in a dedicated Matrix room: *"✅ Codex Wochenlimit zurückgesetzt → 100 % frei"*
    together with the full picture of how much you can still burn on every provider.
@@ -101,7 +103,8 @@ node --test            # unit tests for the reset-detection core (src/lib/detect
 ```
 
 Covers: a genuine reset fires exactly one real event; mid‑window usage increases don't;
-a freshly‑rolled-but-still-busy window doesn't; and the same reset is never notified twice.
+a freshly‑rolled-but-still-busy window doesn't; the same reset is never notified twice; and the
+burn‑rate / exhaustion‑projection math (`src/lib/burn.mjs`).
 
 ## Proof / end‑to‑end evidence
 

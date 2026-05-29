@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { computeBurn } from "./burn.mjs";
 
 const HOME = os.homedir();
 const HIST = path.join(HOME, "Library/Application Support/com.steipete.codexbar/history");
@@ -56,14 +57,20 @@ function latestPerBucket(buckets) {
       .filter((e) => e && e.capturedAt && e.resetsAt && typeof e.usedPercent === "number")
       .sort((a, b) => Date.parse(a.capturedAt) - Date.parse(b.capturedAt))
       .at(-1);
-    if (latest)
+    if (latest) {
+      // samples for the CURRENT window only (same resetsAt) → burn-rate basis
+      const samples = entries
+        .filter((e) => e && e.capturedAt && e.resetsAt === latest.resetsAt && typeof e.usedPercent === "number")
+        .map((e) => ({ capturedAt: e.capturedAt, usedPercent: e.usedPercent }));
       out.push({
         name: bucket.name || null,
         windowMinutes: bucket.windowMinutes || null,
         capturedAt: latest.capturedAt,
         resetsAt: latest.resetsAt,
         usedPercent: latest.usedPercent,
+        samples,
       });
+    }
   }
   return out;
 }
@@ -74,6 +81,12 @@ function toWindow(entry, now) {
   const resetsInSeconds = Math.max(0, Math.round((resetsMs - now) / 1000));
   const label = windowLabel(entry.name, entry.windowMinutes);
   const kind = (entry.windowMinutes || 0) <= 300 ? "short" : "long";
+  // prefer the recent pace (last 6h) over the whole-window average when we have enough points
+  const recent = (entry.samples || []).filter((s) => Date.parse(s.capturedAt) >= now - 6 * 3.6e6);
+  const burnSamples = recent.length >= 2 ? recent : entry.samples;
+  const burn = expired
+    ? { burnPerHour: null, exhaustionAt: null, exhaustsBeforeReset: false }
+    : computeBurn(burnSamples, { now, resetsAt: entry.resetsAt });
   return {
     name: entry.name,
     windowMinutes: entry.windowMinutes,
@@ -85,6 +98,9 @@ function toWindow(entry, now) {
     capturedAt: entry.capturedAt,
     resetsAt: entry.resetsAt,
     resetsInSeconds,
+    burnPerHour: burn.burnPerHour,
+    exhaustionAt: burn.exhaustionAt,
+    exhaustsBeforeReset: burn.exhaustsBeforeReset,
   };
 }
 
