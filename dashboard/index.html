@@ -84,7 +84,12 @@
       function render() {
         if (!KPI) return;
         const now = Date.now();
-        $("#meta").textContent = `${KPI.host} · Stand ${local(KPI.generatedAt)}`;
+        const age = KPI.dataCapturedAt ? Math.round((now - Date.parse(KPI.dataCapturedAt)) / 60000) : null;
+        const ageTxt = age === null ? "" : ` · CodexBar-Daten ${age < 1 ? "<1" : age} min alt`;
+        $("#meta").textContent = `${KPI.host} · Stand ${local(KPI.generatedAt)}${ageTxt}`;
+        const stale = age !== null && age > 15;
+        $("#live").textContent = stale ? "● stale" : "● live";
+        $("#live").style.color = stale ? "var(--amber)" : "var(--green)";
         const cards = KPI.providers
           .map((p) => {
             const wins = p.windows

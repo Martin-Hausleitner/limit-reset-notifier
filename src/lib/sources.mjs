@@ -99,10 +99,12 @@ function buildProvider(id, label, latestEntries, now) {
     (acc, w) => (w.usedPercent > acc.usedPercent ? w : acc),
     pool[0] || { usedPercent: 0, remainingPercent: 100, resetsAt: null, resetsInSeconds: 0 }
   );
+  const lastCapturedAt = windows.map((w) => w.capturedAt).filter(Boolean).sort().at(-1) || null;
   return {
     id,
     label,
     windows,
+    lastCapturedAt,
     headline: {
       usedPercent: binding.usedPercent,
       remainingPercent: binding.remainingPercent,
@@ -165,10 +167,12 @@ export function getSnapshot(now = Date.now()) {
   if (codexLatest.length) providers.push(buildProvider("codex", "Codex (gpt-5.5)", codexLatest, now));
 
   const claudeToday = claudeUsageToday(new Date(now));
+  const dataCapturedAt = providers.map((p) => p.lastCapturedAt).filter(Boolean).sort().at(-1) || null;
   return {
     generatedAt: new Date(now).toISOString(),
     host: os.hostname(),
     tier,
+    dataCapturedAt,
     providers,
     consumption: {
       today: {
