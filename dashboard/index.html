@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>🔔 KI-Limit Reset Notifier</title>
+    <style>
+      :root {
+        --bg: #0c0e14; --card: #161a24; --line: #232838; --txt: #e6e9f0;
+        --dim: #8b93a7; --green: #2fd27a; --amber: #f7b955; --red: #ff5d6c; --accent: #6ea8fe;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--txt);
+        font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      .wrap { max-width: 880px; margin: 0 auto; padding: 22px 16px 60px; }
+      header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; margin-bottom: 6px; }
+      h1 { font-size: 22px; margin: 0; }
+      .meta { color: var(--dim); font-size: 13px; }
+      .pill { font-size: 12px; padding: 2px 9px; border-radius: 999px; background: #1d2433; color: var(--accent); border: 1px solid var(--line); }
+      .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-top: 16px; }
+      .card h2 { font-size: 16px; margin: 0 0 4px; }
+      .win { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 11px 0; border-top: 1px solid var(--line); }
+      .win:first-of-type { border-top: none; }
+      .win .name { font-weight: 600; }
+      .win .sub { color: var(--dim); font-size: 12.5px; }
+      .free { text-align: right; font-variant-numeric: tabular-nums; }
+      .free b { font-size: 20px; }
+      .bar { grid-column: 1 / -1; height: 7px; border-radius: 6px; background: #0d1019; overflow: hidden; }
+      .bar > span { display: block; height: 100%; }
+      .badge { font-size: 11px; padding: 1px 7px; border-radius: 6px; border: 1px solid var(--line); color: var(--dim); }
+      .badge.ok { color: var(--green); border-color: #1d4a33; background: #0f2419; }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+      .kv { color: var(--dim); font-size: 13px; }
+      .kv b { color: var(--txt); }
+      .notify { white-space: pre-wrap; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        background: #0d1019; border: 1px solid var(--line); border-radius: 10px; padding: 12px; color: #cdd3e0; }
+      footer { color: var(--dim); font-size: 12px; margin-top: 22px; text-align: center; }
+      a { color: var(--accent); }
+      .err { color: var(--red); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>🔔 KI-Limit Reset Notifier</h1>
+        <span class="pill" id="live">● live</span>
+        <span class="meta" id="meta">lade…</span>
+      </header>
+      <div id="cards"></div>
+
+      <div class="card">
+        <h2>Verbrauch heute <span class="sub" style="font-weight:400;color:var(--dim)">(ca.)</span></h2>
+        <div class="grid2" id="consumption"></div>
+      </div>
+
+      <div class="card">
+        <h2>Letzte Benachrichtigung</h2>
+        <div id="notify"><span class="kv">—</span></div>
+      </div>
+
+      <footer>
+        limit-reset-notifier · Daten: CodexBar · Zustellung: Matrix (self-hosted) ·
+        Auto-Refresh 30&nbsp;s
+      </footer>
+    </div>
+
+    <script>
+      const $ = (s) => document.querySelector(s);
+      let KPI = null;
+
+      function cd(sec) {
+        sec = Math.max(0, sec | 0);
+        const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600),
+          m = Math.floor((sec % 3600) / 60), s = sec % 60;
+        if (d > 0) return `${d}d ${h}h ${m}m`;
+        if (h > 0) return `${h}h ${m}m ${s}s`;
+        return `${m}m ${s}s`;
+      }
+      const local = (iso) =>
+        new Date(iso).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+      const color = (free) => (free >= 50 ? "var(--green)" : free >= 20 ? "var(--amber)" : "var(--red)");
+      const mio = (n) => (n / 1e6).toLocaleString("de-DE", { maximumFractionDigits: 1 });
+
+      function render() {
+        if (!KPI) return;
+        const now = Date.now();
+        $("#meta").textContent = `${KPI.host} · Stand ${local(KPI.generatedAt)}`;
+        const cards = KPI.providers
+          .map((p) => {
+            const wins = p.windows
+              .map((w) => {
+                const secs = w.expired ? 0 : Math.round((Date.parse(w.resetsAt) - now) / 1000);
+                const reset = w.expired
+                  ? `<span class="badge ok">bereits frei</span>`
+                  : `<span class="sub">Reset in <b data-reset="${w.resetsAt}">${cd(secs)}</b> · ${local(w.resetsAt)}</span>`;
+                return `<div class="win">
+                    <div><span class="name">${w.label}</span><br>${reset}</div>
+                    <div class="free"><b style="color:${color(w.remainingPercent)}">${w.remainingPercent}%</b><br><span class="sub">frei · ${w.usedPercent}% genutzt</span></div>
+                    <div class="bar"><span style="width:${w.usedPercent}%;background:${color(w.remainingPercent)}"></span></div>
+                  </div>`;
+              })
+              .join("");
+            return `<div class="card"><h2>${p.label}</h2>${wins}</div>`;
+          })
+          .join("");
+        $("#cards").innerHTML = cards;
+
+        const c = KPI.consumption.today;
+        $("#consumption").innerHTML = `
+          <div class="kv">Codex Tokens: <b>${mio(c.codexTokensApprox)} Mio</b></div>
+          <div class="kv">Claude Tokens: <b>${mio(c.claudeTokensApprox)} Mio</b></div>
+          <div class="kv">Claude Kosten: <b>$${c.claudeCostUsdApprox}</b></div>
+          <div class="kv">Tier: <b>${KPI.tier || "—"}</b></div>`;
+      }
+
+      function tick() {
+        const now = Date.now();
+        document.querySelectorAll("[data-reset]").forEach((el) => {
+          el.textContent = cd(Math.round((Date.parse(el.dataset.reset) - now) / 1000));
+        });
+      }
+
+      async function loadKpi() {
+        try {
+          KPI = await (await fetch("kpi.json?_=" + Date.now())).json();
+          render();
+          $("#live").style.color = "var(--green)";
+        } catch (e) {
+          $("#meta").innerHTML = `<span class="err">kpi.json nicht erreichbar</span>`;
+          $("#live").style.color = "var(--red)";
+        }
+      }
+      async function loadNotify() {
+        try {
+          const n = await (await fetch("notify.json?_=" + Date.now())).json();
+          $("#notify").innerHTML = `<div class="kv">Gesendet ${local(n.sentAt)} → Raum <b>${n.room_id}</b> · Event <b>${(n.event_id||"").slice(0,14)}…</b></div><div class="notify" style="margin-top:8px">${(n.bodyPlain||"").replace(/</g,"&lt;")}</div>`;
+        } catch { /* optional */ }
+      }
+      loadKpi(); loadNotify();
+      setInterval(tick, 1000);
+      setInterval(loadKpi, 30000);
+      setInterval(loadNotify, 60000);
+    </script>
+  </body>
+</html>

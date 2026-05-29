@@ -1,0 +1,17 @@
+{
+  "room": "!IlLldWiwPYWgJXTrfB:100.120.120.120",
+  "events": [
+    {
+      "event_id": "$nI2RbOCuvJDuVF5uvPHFOveJ4sUJmjAI56Se7Ho0Xvk",
+      "sender": "@openclaw:100.120.120.120",
+      "ts": 1780090789624,
+      "body": "🧪 TEST — Limit-Reset (Demo) — 29.05., 23:40 · MHs-MacBook-Pro.local\n\n✅ Codex (gpt-5.5) · Wochenlimit zurückgesetzt → 100% frei\n\nVerfügbares Kontingent (wie viel du verbrauchen kannst):\n• Claude Code\n   - Session-Limit (5h): 100% frei · bereits zurückgesetzt\n   - Opus-Wochenlimit: 91% frei · Reset in 54h 20m (01.06., 06:00)\n   - Wochenlimit: 77% frei · Reset in 54h 20m (01.06., 06:00)\n• Codex (gpt-5.5)\n   - Session-Limit (5h): 100% frei · Reset in 4h 37m (30.05., 04:17)\n   - Wochenlimit: 13% frei · Reset in 23h 53m (30.05., 23:32)\n\nVerbrauch heute (ca.): Codex 15 Mio Tok · Claude 56,8 Mio Tok / $32.47\n\nLive-Dashboard: https://mpg-mon-bull-austin.trycloudflare.com"
+    },
+    {
+      "event_id": "$Y9i_FZjf3XV3RnI6wQ7ElqZhf6Elu-thw3HbCRnkUwc",
+      "sender": "@openclaw:100.120.120.120",
+      "ts": 1780090190277,
+      "body": "🧪 TEST — Limit-Reset (Demo) — 29.05., 23:30 · MHs-MacBook-Pro.local\n\n✅ Codex (gpt-5.5) · Wochenlimit zurückgesetzt → 100% frei\n\nVerfügbares Kontingent (wie viel du verbrauchen kannst):\n• Claude Code\n   - Session-Limit (5h): 100% frei · bereits zurückgesetzt\n   - Opus-Wochenlimit: 91% frei · Reset in 54h 30m (01.06., 06:00)\n   - Wochenlimit: 78% frei · Reset in 54h 30m (01.06., 06:00)\n• Codex (gpt-5.5)\n   - Session-Limit (5h): 100% frei · Reset in 4h 47m (30.05., 04:17)\n   - Wochenlimit: 13% frei · Reset in 24h 3m (30.05., 23:32)\n\nVerbrauch heute (ca.): Codex 15 Mio Tok · Claude 56,8 Mio Tok / $32.47"
+    }
+  ]
+}
