@@ -33,16 +33,16 @@ node src/notify-matrix.mjs || echo "(notify skipped/failed — see above)"
 # publish live snapshot + last notification to the public dashboard host
 if [ -n "${VCVM_HOST:-}" ]; then
   [ -f proof/last-send.json ] && cp -f proof/last-send.json dist/notify.json || true
-  scp -q dist/kpi.json "$VCVM_HOST:limit-reset-notifier/data/kpi.json" 2>/dev/null \
+  scp -q -o ConnectTimeout=12 dist/kpi.json "$VCVM_HOST:limit-reset-notifier/data/kpi.json" 2>/dev/null \
     && echo "→ kpi.json published to $VCVM_HOST" || echo "(scp kpi.json failed)"
   if [ -f dist/notify.json ]; then
-    scp -q dist/notify.json "$VCVM_HOST:limit-reset-notifier/data/notify.json" 2>/dev/null \
+    scp -q -o ConnectTimeout=12 dist/notify.json "$VCVM_HOST:limit-reset-notifier/data/notify.json" 2>/dev/null \
       && echo "→ notify.json published to $VCVM_HOST" || true
   fi
   # Publish Prometheus metrics into node-exporter's textfile collector (atomic rename)
   if [ -f dist/limit_reset.prom ]; then
-    scp -q dist/limit_reset.prom "$VCVM_HOST:monitoring/textfile-collector/limit_reset.prom.tmp" 2>/dev/null \
-      && ssh -o BatchMode=yes "$VCVM_HOST" 'mv -f ~/monitoring/textfile-collector/limit_reset.prom.tmp ~/monitoring/textfile-collector/limit_reset.prom' 2>/dev/null \
+    scp -q -o ConnectTimeout=12 dist/limit_reset.prom "$VCVM_HOST:monitoring/textfile-collector/limit_reset.prom.tmp" 2>/dev/null \
+      && ssh -o BatchMode=yes -o ConnectTimeout=10 "$VCVM_HOST" 'mv -f ~/monitoring/textfile-collector/limit_reset.prom.tmp ~/monitoring/textfile-collector/limit_reset.prom' 2>/dev/null \
       && echo "→ metrics published to Prometheus (node-exporter textfile)" || echo "(metrics publish failed)"
   fi
 fi
