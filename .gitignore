@@ -4,3 +4,7 @@ state/
 .env.deploy
 *.log
 .DS_Store
+
+# stray logs from ad-hoc runs
+*.err
+collect.err
