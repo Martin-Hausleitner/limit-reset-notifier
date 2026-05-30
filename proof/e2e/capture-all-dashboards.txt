@@ -1,0 +1,41 @@
+=== Full capture of ALL dashboards (temp target, real README untouched) ===
+✅ 0 · Übersicht                              524 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-index.png
+✅ 1 · Executive Overview                     295 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-exec.png
+✅ 2 · Rate-Limits & Resets                   445 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-limits.png
+✅ 3 · Limit-Exhaustion Forecasting           253 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-forecast.png
+✅ 4 · Kosten / FinOps                        376 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-cost.png
+✅ 5 · Token-Volumen je Typ                   341 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-tokens.png
+✅ 6 · Model-Mix & Share                      454 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-modelmix.png
+✅ 7 · Cache-Effizienz                        378 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-cache.png
+✅ 8 · Parent vs Subagent                     399 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-roles.png
+✅ 9 · Daily & Weekly Trends                  286 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-trends.png
+✅ 10 · Throughput                            450 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-throughput.png
+✅ 11 · WHOOP — Recovery & Schlaf             534 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/aw-whoop.png
+✅ 12 · Cognitor — Zeit & Fokus               822 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/aw-computer.png
+✅ 13 · Presence & Training                   153 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/aw-presence.png
+✅ 14 · WHOOP — Lab (50+ Visualisierungen)    739 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/aw-whoop-lab.png
+✅ 15 · Wochen- & Verlaufsübersicht           438 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-weekly.png
+✅ 16 · KI-Agenten — Live & Verlauf           951 KB  /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/ai-agents.png
+
+17 dashboards → ../../../../var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/README.md (gallery injected)
+
+=== gallery injected into temp README (count) ===
+17
+=== all PNGs > 20KB (non-blank) ===
+973524 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/ai-agents.png
+841888 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/aw-computer.png
+156184 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/aw-presence.png
+756252 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/aw-whoop-lab.png
+547304 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/aw-whoop.png
+387200 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-cache.png
+384800 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-cost.png
+302302 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-exec.png
+258659 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-forecast.png
+536153 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-index.png
+455371 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-limits.png
+464645 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-modelmix.png
+408088 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-roles.png
+461221 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-throughput.png
+349038 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-tokens.png
+293173 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-trends.png
+448602 /var/folders/7k/kqr_c4vd53z5_jpvlqjb67xc0000gn/T/tmp.inBVWKfyYH/shots/lrn-weekly.png
