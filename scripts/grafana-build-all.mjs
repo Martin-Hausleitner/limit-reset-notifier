@@ -39,13 +39,15 @@ const hitAll = (w) => `sum(airate_tokens_window{provider="claude",type="cache_re
 
 const DASHBOARDS = [
   { uid: "lrn-exec", title: "1 · Executive Overview", tags: ["lrn", "exec"], panels: [
+    // ★ headline KPI: live token throughput (tokens AND time combined as a rate)
+    s("🔥 Tokens/min (LIVE)", "sum(ai_agent_tokens_per_minute_total)", "", { unit: "short", graphMode: "area", colorMode: "background", thresholds: { mode: "absolute", steps: [{ value: null, color: "blue" }, { value: 50000, color: "green" }, { value: 200000, color: "orange" }, { value: 500000, color: "red" }] } }),
     s("Kosten heute (Claude $)", cwin("today"), "", { unit: "currencyUSD", thresholds: { mode: "absolute", steps: [{ value: null, color: "green" }, { value: 50, color: "orange" }, { value: 150, color: "red" }] } }),
     s("Kosten 7 Tage ($)", cwin("d7"), "", { unit: "currencyUSD" }),
     s("Kosten 30 Tage ($)", cwin("d30"), "", { unit: "currencyUSD" }),
     g("Max Limit-Auslastung", "max(airate_used_percent)", ""),
     g("Cache-Hit-Ratio gesamt", hitAll("all"), "", { unit: "percentunit", max: 1, thresholds: PCT_FREE }),
     s("Tokens heute", twin("today"), "", { unit: "short" }),
-    s("Sessions heute", 'sum(airate_sessions_window{window="today"})', "", { unit: "short" }),
+    ts("🔥 Tokens/min — Auslastung (je Tool)", 'sum by(tool)(ai_agent_tokens_per_minute)', "{{tool}}", { unit: "short", custom: { drawStyle: "line", fillOpacity: 40, showPoints: "never", stacking: { mode: "normal" } } }),
     pie("Kostenanteil je Modell", 'sum by(model)(airate_cost_usd_window{provider="claude",role="all",window="all"})', "{{model}}", { unit: "currencyUSD" }),
     bar("Kosten je Tag ($)", 'sum by(day)(airate_cost_usd_by_day{provider="claude"})', "", { unit: "currencyUSD" }),
     bg("Restkontingent je Limit", "airate_remaining_percent", "{{provider}} · {{window}}", { unit: "percent", max: 100, thresholds: PCT_FREE }),

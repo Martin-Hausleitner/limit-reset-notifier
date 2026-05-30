@@ -24,6 +24,9 @@ const ts = (title, targets, o = {}) => push("timeseries", title, targets, { h: o
 const barDay = (title, expr, legend, o = {}) => push("barchart", title, [t(expr, legend, "table")], { h: 7, w: 12, options: { xField: "day", stacking: "none", showValue: "never", legend: { showLegend: false } }, custom: { fillOpacity: 85, lineWidth: 0 }, ...o });
 
 // ── 1) LIVE headline stats (summed across all machines) ──
+// ★ THE headline KPI: tokens/min — tokens AND time combined as a live throughput rate
+stat("🔥 Tokens/min (LIVE)", 'sum(ai_agent_tokens_per_minute_total{host=~"$host"})', { bg: true, spark: true, w: 6, h: 6, unit: "short", color: { mode: "thresholds" }, thresholds: { mode: "absolute", steps: [{ value: null, color: "blue" }, { value: 50000, color: "green" }, { value: 200000, color: "orange" }, { value: 500000, color: "red" }] } });
+stat("Peak Tokens/min (3h)", 'max_over_time((sum(ai_agent_tokens_per_minute_total{host=~"$host"}))[3h:5s])', { w: 3, h: 6, unit: "short", color: { mode: "fixed", fixedColor: "orange" } });
 stat("🟢 Agents LIVE", 'sum(ai_agents_running_total{host=~"$host"})', { bg: true, w: 3, color: { mode: "fixed", fixedColor: "green" } });
 stat("⚡ Arbeiten gerade", 'sum(ai_agents_active{host=~"$host"})', { bg: true, w: 3, color: { mode: "fixed", fixedColor: "blue" } });
 stat("⏸ Warten", 'sum(ai_agents_idle{host=~"$host"})', { w: 3, color: { mode: "fixed", fixedColor: "text" } });
@@ -33,7 +36,12 @@ stat("Agent-Stunden heute", 'sum(sum_over_time(ai_agents_running_total{host=~"$h
 stat("💸 Live-Burn $/15min", 'sum(ai_agent_session_cost_recent_usd{host=~"$host"})', { w: 3, unit: "currencyUSD", bg: true, color: { mode: "fixed", fixedColor: "red" } });
 stat("Kosten heute", "sum(airate_cost_usd_window{window=\"today\"})", { w: 3, unit: "currencyUSD", color: { mode: "fixed", fixedColor: "orange" } });
 
-// ── 2) THE headline: parallel agents over time, stacked by tool (across machines) ──
+// ── 2) ★ THE centerpiece: token throughput (tokens/min) over time, stacked by tool ──
+ts("🔥 Tokens/min über Zeit (je Tool) — Auslastung", [
+  t("sum by(tool)(ai_agent_tokens_per_minute{host=~\"$host\",tool=~\"$tool\"})", "{{tool}}"),
+], { w: 24, h: 9, stack: true, fill: 55, custom: { lineWidth: 2 } });
+
+// ── 2b) parallel agents over time, stacked by tool (across machines) ──
 ts("Parallele Agents über Zeit (je Tool)", [t("sum by(tool)(ai_agents_running{host=~\"$host\",tool=~\"$tool\"})", "{{tool}}")], { w: 24, h: 9, stack: true, fill: 60 });
 
 // ── 3) per-machine + peak ──

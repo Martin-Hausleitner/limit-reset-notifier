@@ -20,6 +20,7 @@ push("text", "", [], {
 });
 
 // ── live KPI tiles ──
+stat("🔥 Tokens/min (LIVE)", "sum(ai_agent_tokens_per_minute_total)", { bg: true, w: 4, unit: "short", color: { mode: "thresholds" }, thresholds: { mode: "absolute", steps: [{ value: null, color: "blue" }, { value: 50000, color: "green" }, { value: 200000, color: "orange" }, { value: 500000, color: "red" }] } });
 stat("🟢 Agenten live", "sum(ai_agents_running_total)", { bg: true, w: 4, color: { mode: "fixed", fixedColor: "green" } });
 stat("⚡ Arbeiten gerade", "sum(ai_agents_active)", { bg: true, w: 4, color: { mode: "fixed", fixedColor: "blue" } });
 stat("💸 Live-Burn $/15min", "sum(ai_agent_session_cost_recent_usd)", { bg: true, w: 4, unit: "currencyUSD", color: { mode: "fixed", fixedColor: "red" } });
