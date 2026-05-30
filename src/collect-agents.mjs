@@ -139,8 +139,27 @@ emit("ai_agent_sessions_active", "Distinct active agent sessions", "gauge", [{ l
 const list = [...sessions.entries()];
 emit("ai_agent_session_runtime_seconds", "Runtime per session (labels: dir, status)", "gauge", list.map(([s, o]) => ({ l: { session: s, tool: o.tool, host: HOST, dir: o.dir, status: o.status }, v: o.runtime })));
 emit("ai_agent_session_cpu_percent", "CPU% per session", "gauge", list.map(([s, o]) => ({ l: { session: s, tool: o.tool, host: HOST }, v: o.cpu })));
-emit("ai_agent_session_tokens_recent", "Tokens burned in last 15 min per session", "gauge", list.filter(([, o]) => o.burn).map(([s, o]) => ({ l: { session: s, host: HOST, model: o.burn.model || "?" }, v: o.burn.recentTok })));
+emit("ai_agent_session_tokens_recent", "Tokens burned in last 15 min per session", "gauge", list.filter(([, o]) => o.burn).map(([s, o]) => ({ l: { session: s, tool: o.tool, host: HOST, model: o.burn.model || "?" }, v: o.burn.recentTok })));
 emit("ai_agent_session_cost_recent_usd", "USD burned in last 15 min per session", "gauge", list.filter(([, o]) => o.burn).map(([s, o]) => ({ l: { session: s, host: HOST }, v: o.burn.recentCost })));
+
+// ── headline KPI: token burn RATE (tokens/min) — tokens AND time combined ──
+// recentTok is the trailing 15-min burn per session; ÷15 turns it into a live
+// tokens-per-minute rate. Summed per tool (+ total) this is the single best
+// gauge of real Claude/Codex throughput/utilisation right now.
+const BURN_WINDOW_MIN = 900000 / 60000; // 15 min, matches burnFor() cutoff
+const tpmByTool = {};
+let tpmTotal = 0;
+for (const [, o] of sessions) {
+  if (!o.burn || !o.burn.recentTok) continue;
+  const tpm = o.burn.recentTok / BURN_WINDOW_MIN;
+  tpmByTool[o.tool] = (tpmByTool[o.tool] || 0) + tpm;
+  tpmTotal += tpm;
+}
+// emit a line for every running tool so idle tools show 0 (Claude vs Codex stay comparable)
+const tpmTools = [...new Set([...Object.keys(tpmByTool), ...TOOLS.filter((t) => perTool[t])])];
+emit("ai_agent_tokens_per_minute", "Token burn rate per tool (tokens/min, trailing 15-min window)", "gauge", tpmTools.map((t) => ({ l: { tool: t, host: HOST }, v: +(tpmByTool[t] || 0).toFixed(1) })));
+emit("ai_agent_tokens_per_minute_total", "Total token burn rate (tokens/min, trailing 15-min window)", "gauge", [{ l: { host: HOST }, v: +tpmTotal.toFixed(1) }]);
+
 emit("ai_collector_up", "Agent collector heartbeat", "gauge", [{ l: { host: HOST }, v: 1 }]);
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });

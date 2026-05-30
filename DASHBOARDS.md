@@ -1,7 +1,12 @@
 # Grafana-Dashboards — Übersicht
 
 Lokales Grafana: **http://127.0.0.1:3300** (Home = Dashboard 1). Start: `bash local-stack/start-native.sh`.
-Stand: 2026-05-30 · 15 Dashboards · 216 Panels.
+Stand: 2026-05-31 · 15 Dashboards · 220 Panels.
+
+> **★ Zentrale KPI — Tokens/min (live):** `ai_agent_tokens_per_minute{tool}` / `…_total` — der
+> 15-min-Token-Burn pro Session als **Rate** (Tokens UND Zeit kombiniert). Sie ist die
+> aussagekräftigste Auslastungskennzahl für Claude/Codex und prominent auf **0 · Übersicht**,
+> **1 · Executive Overview** und **16 · KI-Agenten** (Headline-Tile + Verlauf je Tool).
 
 ## 🤖 KI-Nutzung & Limits (CodexBar → Prometheus)
 
@@ -31,7 +36,7 @@ Stand: 2026-05-30 · 15 Dashboards · 216 Panels.
 
 | # | Dashboard | Zeigt | Panels | UID |
 |---|-----------|-------|:--:|-----|
-| 16 | **KI-Agenten — Live & Verlauf** | Agents live/Peak, Agent-Stunden, Tokens/Kosten heute, **parallele Agents über Zeit** (je Tool/Maschine), Live-Session-Tabelle, Stunden-Heatmap, Multi-Wochen Tokens/Kosten | 15 | `ai-agents` |
+| 16 | **KI-Agenten — Live & Verlauf** | **★ Tokens/min live + Peak**, **Tokens/min über Zeit (je Tool)**, Agents live/Peak, Agent-Stunden, Tokens/Kosten heute, **parallele Agents über Zeit** (je Tool/Maschine), Live-Session-Tabelle, Stunden-Heatmap, Multi-Wochen Tokens/Kosten | 23 | `ai-agents` |
 
 ---
 
