@@ -5,3 +5,10 @@ scrape_configs:
   - job_name: limit-reset-notifier
     static_configs:
       - targets: ["localhost:9109"]
+  - job_name: activitywatch
+    static_configs:
+      - targets: ["localhost:9110"]
+  - job_name: ai-agents
+    static_configs:
+      - targets: ["localhost:9111"]      # this Mac (host="mac")
+      - targets: ["100.120.120.120:9111"] # vcvm over Tailscale (host="vcvm")

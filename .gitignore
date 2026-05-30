@@ -8,3 +8,6 @@ state/
 # stray logs from ad-hoc runs
 *.err
 collect.err
+
+# personal-data dashboard screenshots (health/usage/cost) — keep local
+proof/grafana/
