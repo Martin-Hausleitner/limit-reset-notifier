@@ -1,0 +1,20 @@
+=== Live GitHub render check (master) — 2026-05-30T23:40:07Z ===
+README contains gallery markers:
+  marker lines: 2
+10 KPI screenshots reachable on master (HTTP / content-type):
+  lrn-exec.png     200 image/png
+  lrn-limits.png   200 image/png
+  lrn-forecast.png 200 image/png
+  lrn-cost.png     200 image/png
+  lrn-tokens.png   200 image/png
+  lrn-modelmix.png 200 image/png
+  lrn-cache.png    200 image/png
+  lrn-roles.png    200 image/png
+  lrn-trends.png   200 image/png
+  lrn-throughput.png 200 image/png
+Personal-data boards correctly ABSENT on master (expect 404):
+  aw-whoop.png     404
+  aw-computer.png  404
+  ai-agents.png    404
+Merged PR:
+  #1 MERGED https://github.com/Martin-Hausleitner/limit-reset-notifier/pull/1

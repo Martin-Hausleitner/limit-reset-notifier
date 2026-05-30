@@ -1,0 +1,26 @@
+=== Unit tests (node --test) — 2026-05-30T23:38:17Z ===
+✔ increasing usage → positive burn + correct exhaustion projection (1.855667ms)
+✔ slow burn that outlasts the reset → exhaustsBeforeReset false (0.117917ms)
+✔ flat usage → ~0 burn, no projection (0.062291ms)
+✔ single sample → null (cannot estimate) (0.121166ms)
+✔ first observation only seeds state, emits no event (0.716167ms)
+✔ genuine reset fires exactly one REAL (non-demo) event (0.074792ms)
+✔ mid-window usage increase does NOT fire (0.085333ms)
+✔ new window but still heavily used does NOT fire (0.05675ms)
+✔ does not re-notify the same reset (dedup) (0.076958ms)
+✔ demoEvent targets the most-constrained provider (0.106084ms)
+✔ windows are matched by name, not array index (reorder-safe) (0.158583ms)
+✔ window with unknown reset time (null) emits no event (0.0855ms)
+✔ buildKpiProm yields 1000+ valid prometheus series (requires CodexBar data) (437.212167ms)
+✔ buildKpiProm output is well-formed exposition (472.365917ms)
+✔ emits valid prometheus exposition with provider/window labels (1.099791ms)
+✔ unknown-reset window omits reset/exhaustion series; never NaN (0.132208ms)
+✔ every emitted metric has HELP and TYPE (0.098709ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 999.806959

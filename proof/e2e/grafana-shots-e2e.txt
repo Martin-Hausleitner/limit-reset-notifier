@@ -1,0 +1,14 @@
+=== E2E test: grafana-shots pipeline → temp README — 2026-05-30T23:39:08Z ===
+✅ 1 · Executive Overview                     303 KB  /tmp/claude-501/lrn-shots-e2e-PAFLi6/shots/lrn-exec.png
+✅ 16 · KI-Agenten — Live & Verlauf           937 KB  /tmp/claude-501/lrn-shots-e2e-PAFLi6/shots/ai-agents.png
+
+2 dashboards → ../../../../tmp/claude-501/lrn-shots-e2e-PAFLi6/README.md (gallery injected)
+✔ grafana-shots: screenshots all dashboards and injects a README gallery (46808.19275ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 46878.718
