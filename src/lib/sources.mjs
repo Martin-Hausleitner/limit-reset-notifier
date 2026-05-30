@@ -47,38 +47,46 @@ function windowLabel(name, windowMinutes) {
 // Given an array of "buckets" (each bucket = one rate-limit window type with a
 // time-series of {capturedAt,resetsAt,usedPercent}), return the latest *usable*
 // entry per bucket (skipping trailing entries that lack a usedPercent reading).
-function latestPerBucket(buckets) {
+function latestPerBucket(buckets, now) {
   if (!Array.isArray(buckets)) return [];
   const out = [];
   for (const bucket of buckets) {
     const entries = bucket?.entries;
     if (!Array.isArray(entries) || entries.length === 0) continue;
-    const latest = entries
-      .filter((e) => e && e.capturedAt && e.resetsAt && typeof e.usedPercent === "number")
-      .sort((a, b) => Date.parse(a.capturedAt) - Date.parse(b.capturedAt))
-      .at(-1);
-    if (latest) {
-      // samples for the CURRENT window only (same resetsAt) → burn-rate basis
-      const samples = entries
-        .filter((e) => e && e.capturedAt && e.resetsAt === latest.resetsAt && typeof e.usedPercent === "number")
-        .map((e) => ({ capturedAt: e.capturedAt, usedPercent: e.usedPercent }));
-      out.push({
-        name: bucket.name || null,
-        windowMinutes: bucket.windowMinutes || null,
-        capturedAt: latest.capturedAt,
-        resetsAt: latest.resetsAt,
-        usedPercent: latest.usedPercent,
-        samples,
-      });
+    // Use the newest *usage* reading even if it lacks a resetsAt (CodexBar sometimes
+    // omits it) so the displayed % reflects current reality, not a stale entry.
+    const used = entries
+      .filter((e) => e && e.capturedAt && typeof e.usedPercent === "number")
+      .sort((a, b) => Date.parse(a.capturedAt) - Date.parse(b.capturedAt));
+    if (used.length === 0) continue;
+    const latestUsed = used.at(-1);
+    const latestWithReset = used.filter((e) => e.resetsAt).at(-1);
+    let resetsAt = latestUsed.resetsAt || latestWithReset?.resetsAt || null;
+    // If the only known reset is already past while we're clearly mid-usage, the window
+    // has rolled and CodexBar hasn't captured the new reset yet → mark it unknown.
+    if (resetsAt && !latestUsed.resetsAt && Date.parse(resetsAt) <= now && latestUsed.usedPercent > 5) {
+      resetsAt = null;
     }
+    const samples = used
+      .filter((e) => (resetsAt ? e.resetsAt === resetsAt : !e.resetsAt))
+      .map((e) => ({ capturedAt: e.capturedAt, usedPercent: e.usedPercent }));
+    out.push({
+      name: bucket.name || null,
+      windowMinutes: bucket.windowMinutes || null,
+      capturedAt: latestUsed.capturedAt,
+      resetsAt,
+      usedPercent: latestUsed.usedPercent,
+      samples,
+    });
   }
   return out;
 }
 
 function toWindow(entry, now) {
-  const resetsMs = Date.parse(entry.resetsAt);
-  const expired = resetsMs <= now; // window already elapsed; no fresh poll since
-  const resetsInSeconds = Math.max(0, Math.round((resetsMs - now) / 1000));
+  const resetsMs = entry.resetsAt ? Date.parse(entry.resetsAt) : null;
+  const unknownReset = resetsMs === null; // current usage known, but reset time not captured
+  const expired = resetsMs !== null && resetsMs <= now; // window already elapsed
+  const resetsInSeconds = resetsMs !== null ? Math.max(0, Math.round((resetsMs - now) / 1000)) : null;
   const label = windowLabel(entry.name, entry.windowMinutes);
   const kind = (entry.windowMinutes || 0) <= 300 ? "short" : "long";
   // prefer the recent pace (last 6h) over the whole-window average when we have enough points
@@ -91,12 +99,13 @@ function toWindow(entry, now) {
     name: entry.name,
     windowMinutes: entry.windowMinutes,
     expired,
+    unknownReset,
     kind,
     label,
     usedPercent: entry.usedPercent,
     remainingPercent: Math.max(0, 100 - entry.usedPercent),
     capturedAt: entry.capturedAt,
-    resetsAt: entry.resetsAt,
+    resetsAt: entry.resetsAt || null,
     resetsInSeconds,
     burnPerHour: burn.burnPerHour,
     exhaustionAt: burn.exhaustionAt,
@@ -170,10 +179,10 @@ export function getSnapshot(now = Date.now()) {
   const claudeHist = readJson(PATHS.claudeHistory);
   const codexHist = readJson(PATHS.codexHistory);
 
-  const claudeLatest = latestPerBucket(claudeHist?.unscoped);
+  const claudeLatest = latestPerBucket(claudeHist?.unscoped, now);
   const prefKey = codexHist?.preferredAccountKey;
   const codexBuckets = (prefKey && codexHist?.accounts?.[prefKey]) || [];
-  const codexLatest = latestPerBucket(codexBuckets);
+  const codexLatest = latestPerBucket(codexBuckets, now);
 
   const tier = claudeTier();
   const claudeLabel = tier ? `Claude Code (${tier.replace(/_/g, " ")})` : "Claude Code";

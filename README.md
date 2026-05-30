@@ -78,6 +78,18 @@ The **Matrix access token** is read from the macOS keychain
 (`security find-generic-password -s matrix-archive-sync -a "$USER" -w`) or `$MATRIX_TOKEN` —
 it is never written to disk in this repo.
 
+### Watchdog (self-check every 30 min)
+
+A second launchd job runs `scripts/selfcheck.mjs` every 30 minutes. It re-runs the unit tests
+and checks the public dashboard (login + no-login), data freshness, the vcvm services and the
+collector job — writing `state/selfcheck.json` and **posting a Matrix alert if anything regresses**.
+
+```bash
+cp deploy/com.mh.limit-reset-selfcheck.plist ~/Library/LaunchAgents/
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.mh.limit-reset-selfcheck.plist
+node scripts/selfcheck.mjs           # run a check now
+```
+
 ### VPS (public dashboard)
 
 `deploy/vcvm-setup.sh` provisions everything on the host named by `$VCVM_HOST`:

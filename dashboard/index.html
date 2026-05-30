@@ -94,12 +94,14 @@
           .map((p) => {
             const wins = p.windows
               .map((w) => {
-                const secs = w.expired ? 0 : Math.round((Date.parse(w.resetsAt) - now) / 1000);
-                const reset = w.expired
+                const secs = w.expired || !w.resetsAt ? 0 : Math.round((Date.parse(w.resetsAt) - now) / 1000);
+                const reset = w.unknownReset
+                  ? `<span class="sub">Reset-Zeit unbekannt</span>`
+                  : w.expired
                   ? `<span class="badge ok">bereits frei</span>`
                   : `<span class="sub">Reset in <b data-reset="${w.resetsAt}">${cd(secs)}</b> · ${local(w.resetsAt)}</span>`;
                 const burnTxt =
-                  !w.expired && w.burnPerHour != null && w.burnPerHour > 0.05
+                  !w.expired && !w.unknownReset && w.burnPerHour != null && w.burnPerHour > 0.05
                     ? `<br><span class="sub" style="color:${w.exhaustsBeforeReset ? "var(--amber)" : "var(--dim)"}">🔥 ${w.burnPerHour}%/h ${w.exhaustsBeforeReset ? "→ Limit ~" + local(w.exhaustionAt) : "· reicht bis Reset ✓"}</span>`
                     : "";
                 return `<div class="win">

@@ -23,7 +23,7 @@ const snap = (used, resetsAt) => ({
 test("first observation only seeds state, emits no event", () => {
   const { events, state } = detectResets(snap(95, T1), {}, { now: beforeT1 });
   assert.equal(events.length, 0);
-  assert.ok(state.providers.codex.windows[0]);
+  assert.ok(state.providers.codex.windows.Wochenlimit); // keyed by window label, not index
 });
 
 test("genuine reset fires exactly one REAL (non-demo) event", () => {
@@ -66,4 +66,26 @@ test("demoEvent targets the most-constrained provider", () => {
   const e = demoEvent(s);
   assert.equal(e.provider, "codex");
   assert.equal(e.demo, true);
+});
+
+test("windows are matched by name, not array index (reorder-safe)", () => {
+  const Ts = "2026-05-30T04:00:00Z"; // session reset, stays in the future
+  const win = (name, used, resetsAt) => ({ name, label: name, resetsAt, usedPercent: used, remainingPercent: 100 - used });
+  const prov = (windows) => ({ providers: [{ id: "codex", label: "Codex", windows }] });
+  const { state: s1 } = detectResets(prov([win("session", 5, Ts), win("weekly", 95, T1)]), {}, { now: beforeT1 });
+  // weekly genuinely resets (T1→T2, 95→2); windows are REORDERED in the next snapshot
+  const { events } = detectResets(prov([win("weekly", 2, T2), win("session", 5, Ts)]), s1, { now: afterT1 });
+  assert.equal(events.length, 1); // index-keying would misfire here; name-keying is correct
+  assert.equal(events[0].windowLabel, "weekly");
+});
+
+test("window with unknown reset time (null) emits no event", () => {
+  const w = (used) => ({
+    providers: [{ id: "claude", label: "Claude", windows: [{ name: "session", label: "Session", resetsAt: null, usedPercent: used, remainingPercent: 100 - used }] }],
+  });
+  const { state: s1, events: e1 } = detectResets(w(21), {}, { now: afterT1 });
+  assert.equal(e1.length, 0);
+  assert.equal(s1.providers.claude.windows.session.resetsAt, null);
+  const { events: e2 } = detectResets(w(25), s1, { now: afterT1 });
+  assert.equal(e2.length, 0);
 });

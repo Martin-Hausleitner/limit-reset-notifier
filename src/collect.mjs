@@ -17,9 +17,13 @@ console.log(`# KPI snapshot @ ${snap.generatedAt}  (host: ${snap.host})`);
 for (const p of snap.providers) {
   console.log(`\n${p.label}`);
   for (const w of p.windows) {
-    const h = Math.floor(w.resetsInSeconds / 3600);
-    const m = Math.round((w.resetsInSeconds % 3600) / 60);
-    const when = w.expired ? "bereits frei (zurückgesetzt)" : `reset in ${h}h ${m}m  (${w.resetsAt})`;
+    const h = Math.floor((w.resetsInSeconds || 0) / 3600);
+    const m = Math.round(((w.resetsInSeconds || 0) % 3600) / 60);
+    const when = w.unknownReset
+      ? "Reset-Zeit unbekannt"
+      : w.expired
+      ? "bereits frei (zurückgesetzt)"
+      : `reset in ${h}h ${m}m  (${w.resetsAt})`;
     console.log(
       `  ${w.label.padEnd(20)} used ${String(w.usedPercent).padStart(3)}%  ` +
         `frei ${String(w.remainingPercent).padStart(3)}%  ${when}`

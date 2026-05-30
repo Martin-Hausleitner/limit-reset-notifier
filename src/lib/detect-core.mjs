@@ -15,9 +15,21 @@ export function detectResets(snapshot, state, opts = {}) {
   for (const p of snapshot.providers) {
     const prevP = (next.providers[p.id] ||= { windows: {} });
     p.windows.forEach((w, idx) => {
-      const prev = prevP.windows[idx];
+      // Match windows by a STABLE identity (name/label), not array index, so
+      // reordering or insertion never misaligns the prev-vs-current comparison.
+      const key = w.name || w.label || String(idx);
+      const prev = prevP.windows[key];
+      // Without a known reset time we can't evaluate a reset boundary — just persist.
+      if (!w.resetsAt) {
+        prevP.windows[key] = {
+          resetsAt: null,
+          usedPercent: w.usedPercent,
+          notifiedResetsAt: prev?.notifiedResetsAt || null,
+        };
+        return;
+      }
       let isReset = false;
-      if (prev) {
+      if (prev && prev.resetsAt) {
         const rolled = w.resetsAt !== prev.resetsAt;
         const fresh = w.usedPercent <= threshold;
         const oldExpired = Date.parse(prev.resetsAt) <= now;
@@ -37,7 +49,7 @@ export function detectResets(snapshot, state, opts = {}) {
           demo: false,
         });
       }
-      prevP.windows[idx] = {
+      prevP.windows[key] = {
         resetsAt: w.resetsAt,
         usedPercent: w.usedPercent,
         notifiedResetsAt: isReset ? w.resetsAt : prev?.notifiedResetsAt || null,

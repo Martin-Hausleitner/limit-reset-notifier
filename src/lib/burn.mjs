@@ -28,7 +28,7 @@ export function computeBurn(samples, opts = {}) {
   }
   const remaining = Math.max(0, 100 - last.u);
   const secsToLimit = (remaining / burnPerHour) * 3600;
-  const exhaustionAt = new Date(now + secsToLimit * 1000).toISOString();
+  const exhaustionAt = new Date(now + secsToLimit * 1000).toISOString().replace(/\.\d{3}Z$/, "Z");
   const exhaustsBeforeReset = resetsAt ? Date.parse(exhaustionAt) < Date.parse(resetsAt) : false;
   return { burnPerHour: rounded, exhaustionAt, exhaustsBeforeReset };
 }

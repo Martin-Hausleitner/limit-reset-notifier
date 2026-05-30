@@ -127,7 +127,11 @@ function buildBodies(kpi, events) {
     plain.push(`• ${p.label}`);
     html.push(`<li><strong>${p.label}</strong><ul>`);
     for (const w of p.windows) {
-      const when = w.expired ? "bereits zurückgesetzt" : `Reset in ${countdown(w.resetsInSeconds)} (${fmtLocal(w.resetsAt)})`;
+      const when = w.unknownReset
+        ? "Reset-Zeit unbekannt"
+        : w.expired
+        ? "bereits zurückgesetzt"
+        : `Reset in ${countdown(w.resetsInSeconds)} (${fmtLocal(w.resetsAt)})`;
       plain.push(`   - ${w.label}: ${w.remainingPercent}% frei · ${when}`);
       html.push(`<li>${w.label}: <strong>${w.remainingPercent}% frei</strong> · ${when}</li>`);
     }
