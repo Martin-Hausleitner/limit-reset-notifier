@@ -8,9 +8,10 @@ const DS = { type: "prometheus", uid: process.env.GRAFANA_DS_UID || "prometheus"
 const headers = { "Content-Type": "application/json", Authorization: "Basic " + Buffer.from(AUTH).toString("base64") };
 
 let rid = 0;
-const target = (expr, legend, table) => ({
+// mode: "instant" (single current value), "table" (instant + table format), undefined (range)
+const target = (expr, legend, mode) => ({
   expr, legendFormat: legend || "", refId: "A" + ++rid, datasource: DS,
-  instant: !!table, format: table ? "table" : "time_series",
+  instant: mode === "instant" || mode === "table", format: mode === "table" ? "table" : "time_series",
 });
 // panel helpers: g gauge, s stat, bg bargauge, ts timeseries, bar barchart, pie piechart, tbl table
 const PCT = { mode: "absolute", steps: [{ value: null, color: "green" }, { value: 60, color: "orange" }, { value: 85, color: "red" }] };
@@ -23,13 +24,13 @@ function panel(type, t, targets, { unit = "short", w = 6, h = 8, thresholds, opt
     gridPos: { x: 0, y: 0, w, h },
   };
 }
-const g = (t, e, l, o = {}) => panel("gauge", t, [target(e, l)], { unit: "percent", min: 0, max: 100, thresholds: PCT, w: 6, options: { reduceOptions: { calcs: ["lastNotNull"] }, showThresholdMarkers: true }, ...o });
-const s = (t, e, l, o = {}) => panel("stat", t, [target(e, l)], { w: 6, options: { reduceOptions: { calcs: ["lastNotNull"] }, graphMode: "none", textMode: l ? "value_and_name" : "value", colorMode: "value" }, ...o });
-const bg = (t, e, l, o = {}) => panel("bargauge", t, [target(e, l)], { w: 12, options: { reduceOptions: { calcs: ["lastNotNull"] }, displayMode: "gradient", orientation: "horizontal" }, ...o });
+const g = (t, e, l, o = {}) => panel("gauge", t, [target(e, l, "instant")], { unit: "percent", min: 0, max: 100, thresholds: PCT, w: 6, options: { reduceOptions: { calcs: ["lastNotNull"] }, showThresholdMarkers: true }, ...o });
+const s = (t, e, l, o = {}) => panel("stat", t, [target(e, l, "instant")], { w: 6, options: { reduceOptions: { calcs: ["lastNotNull"] }, graphMode: "none", textMode: l ? "value_and_name" : "value", colorMode: "value" }, ...o });
+const bg = (t, e, l, o = {}) => panel("bargauge", t, [target(e, l, "instant")], { w: 12, options: { reduceOptions: { calcs: ["lastNotNull"] }, displayMode: "gradient", orientation: "horizontal" }, ...o });
 const ts = (t, e, l, o = {}) => panel("timeseries", t, [target(e, l)], { w: 12, custom: { drawStyle: "line", fillOpacity: 12, showPoints: "never" }, ...o });
-const bar = (t, e, l, o = {}) => panel("barchart", t, [target(e, l, true)], { w: 12, options: { xField: "day", stacking: "none", showValue: "never" }, custom: { fillOpacity: 80 }, ...o });
-const pie = (t, e, l, o = {}) => panel("piechart", t, [target(e, l, true)], { w: 8, options: { reduceOptions: { calcs: ["lastNotNull"] }, pieType: "donut", legend: { displayMode: "table", placement: "right", values: ["value", "percent"] } }, ...o });
-const tbl = (t, e, l, o = {}) => panel("table", t, [target(e, l, true)], { w: 24, options: {}, ...o });
+const bar = (t, e, l, o = {}) => panel("barchart", t, [target(e, l, "table")], { w: 12, options: { xField: "day", stacking: "none", showValue: "never" }, custom: { fillOpacity: 80 }, ...o });
+const pie = (t, e, l, o = {}) => panel("piechart", t, [target(e, l, "table")], { w: 8, options: { reduceOptions: { calcs: ["lastNotNull"] }, pieType: "donut", legend: { displayMode: "table", placement: "right", values: ["value", "percent"] } }, ...o });
+const tbl = (t, e, l, o = {}) => panel("table", t, [target(e, l, "table")], { w: 24, options: {}, ...o });
 
 // ---- query fragments
 const cwin = (w, extra = "") => `sum(airate_cost_usd_window{provider="claude",role="all",window="${w}"${extra}})`;
@@ -173,7 +174,7 @@ function layout(panels) {
 
 const results = [];
 for (const d of DASHBOARDS) {
-  const dashboard = { uid: d.uid, title: d.title, tags: d.tags, timezone: "browser", schemaVersion: 39, version: 0, refresh: "30s", time: { from: "now-30d", to: "now" }, panels: layout(d.panels) };
+  const dashboard = { uid: d.uid, title: d.title, tags: d.tags, timezone: "browser", schemaVersion: 39, version: 0, refresh: "30s", time: { from: "now-6h", to: "now" }, panels: layout(d.panels) };
   const res = await fetch(`${BASE}/api/dashboards/db`, { method: "POST", headers, body: JSON.stringify({ dashboard, overwrite: true, message: "lrn auto" }) });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) { console.error(`✗ ${d.title}: HTTP ${res.status} ${JSON.stringify(body).slice(0, 200)}`); continue; }

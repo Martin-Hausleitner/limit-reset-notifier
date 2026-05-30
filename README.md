@@ -78,6 +78,31 @@ reachable off-VPN through the same tunnel via a **path-restricted reverse proxy*
 `dashboard/server.mjs` that forwards *only* `/public-dashboards/*`, `/api/public/*`, `/public/*`
 to Grafana — the anonymous-admin UI/API stays blocked behind the dashboard's Basic-Auth.
 
+### 1000+ KPIs · 10 dashboards (NotebookLM-informed)
+
+`src/lib/kpis.mjs` derives **~1100 Prometheus series** from the CodexBar cost history —
+`provider × model × token-type × role × time-window × day`, plus ratios (cache-hit,
+output/input, cost-per-Mtok), shares (subagent, sidechain) and session counts. They are
+appended to the same `.prom` textfile, so node-exporter exposes everything in one scrape.
+
+The dashboard taxonomy was designed with **NotebookLM as a RAG** (KPI/FinOps/Grafana-viz
+sources + the data schema). `scripts/grafana-build-all.mjs` provisions **10 dashboards /
+100 panels**: `1 Executive · 2 Rate-Limits · 3 Forecasting · 4 Cost/FinOps · 5 Token-Volume ·
+6 Model-Mix · 7 Cache · 8 Parent-vs-Subagent · 9 Daily-Trends · 10 Throughput`.
+Screenshots of all ten live in `proof/grafana/`.
+
+```bash
+GRAFANA_URL=… GRAFANA_DS_UID=prometheus node scripts/grafana-build-all.mjs   # 10 dashboards
+bash scripts/shot-dashboards.sh                                              # screenshot all 10
+```
+
+**Local stack (no VPS needed).** `local-stack/` runs the whole thing on the laptop with
+Homebrew grafana+prometheus — same metrics, same generator, portable to the real Grafana:
+
+```bash
+bash local-stack/start-native.sh      # metrics :9109 · Prometheus :9490 · Grafana :3300
+```
+
 ## Setup
 
 ```bash
