@@ -5,15 +5,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getSnapshot } from "./lib/sources.mjs";
 import { snapshotToProm } from "./lib/metrics.mjs";
+import { buildKpiProm } from "./lib/kpis.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "dist", "kpi.json");
 const PROM = path.join(ROOT, "dist", "limit_reset.prom");
 
 const snap = getSnapshot();
+const kpi = buildKpiProm(); // 1000+ derived usage/cost KPI series
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, JSON.stringify(snap, null, 2));
-fs.writeFileSync(PROM, snapshotToProm(snap)); // Prometheus textfile-collector format
+fs.writeFileSync(PROM, snapshotToProm(snap) + "\n" + kpi.text); // Prometheus textfile-collector format
 
 // human summary
 console.log(`# KPI snapshot @ ${snap.generatedAt}  (host: ${snap.host})`);
@@ -38,3 +40,4 @@ console.log(
     `Claude ${snap.consumption.today.claudeTokensApprox.toLocaleString()} tok / $${snap.consumption.today.claudeCostUsdApprox}`
 );
 console.log(`\n→ geschrieben: ${OUT}`);
+console.log(`→ Prometheus: ${PROM}  (${kpi.count} abgeleitete KPI-Serien · ${kpi.claudeModels.length} Claude- + ${kpi.codexModels.length} Codex-Modelle · ${kpi.claudeDays} Tage)`);
