@@ -4,13 +4,16 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getSnapshot } from "./lib/sources.mjs";
+import { snapshotToProm } from "./lib/metrics.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "dist", "kpi.json");
+const PROM = path.join(ROOT, "dist", "limit_reset.prom");
 
 const snap = getSnapshot();
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, JSON.stringify(snap, null, 2));
+fs.writeFileSync(PROM, snapshotToProm(snap)); // Prometheus textfile-collector format
 
 // human summary
 console.log(`# KPI snapshot @ ${snap.generatedAt}  (host: ${snap.host})`);

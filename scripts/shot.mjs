@@ -23,8 +23,10 @@ const ctx = await browser.newContext({
   ignoreHTTPSErrors: true,
 });
 const page = await ctx.newPage();
-await page.goto(url, { waitUntil: "networkidle", timeout: 45000 });
-await page.waitForTimeout(2800); // let live countdowns + fetches render
+// networkidle never settles on live-refreshing dashboards (e.g. Grafana) → tolerate the
+// timeout and fall back to a fixed settle window. Override via env when needed.
+await page.goto(url, { waitUntil: process.env.SHOT_WAITUNTIL || "networkidle", timeout: 45000 }).catch((e) => console.error("goto:", e.name));
+await page.waitForTimeout(Number(process.env.SHOT_SETTLE_MS || 2800)); // let countdowns + panels render
 await page.screenshot({ path: out, fullPage: true });
 await browser.close();
 console.log("shot →", out);

@@ -18,6 +18,22 @@ const STATIC_DIR = process.env.STATIC_DIR || HERE;
 
 const MIME = { ".html": "text/html; charset=utf-8", ".json": "application/json; charset=utf-8", ".css": "text/css", ".js": "text/javascript" };
 
+// Path-restricted reverse proxy to Grafana — exposes ONLY read-only public-dashboard
+// surfaces (never the anonymous-admin UI/API). Lets the Grafana dashboard be shared
+// publicly through the same tunnel without leaking admin.
+const GRAFANA = { host: process.env.GRAFANA_HOST || "127.0.0.1", port: Number(process.env.GRAFANA_PORT || 3000) };
+const GRAFANA_PUBLIC_PREFIXES = ["/public-dashboards/", "/api/public/", "/public/", "/api/frontend/settings", "/api/health", "/avatar/"];
+const isGrafanaPublic = (p) => GRAFANA_PUBLIC_PREFIXES.some((x) => p === x || p.startsWith(x));
+function proxyGrafana(req, res) {
+  const gr = http.request(
+    { host: GRAFANA.host, port: GRAFANA.port, method: req.method, path: req.url,
+      headers: { ...req.headers, host: `${GRAFANA.host}:${GRAFANA.port}`, "x-forwarded-host": req.headers.host || "", "x-forwarded-proto": "https" } },
+    (gres) => { res.writeHead(gres.statusCode, gres.headers); gres.pipe(res); }
+  );
+  gr.on("error", () => { if (!res.headersSent) res.writeHead(502); res.end("grafana upstream error"); });
+  req.pipe(gr);
+}
+
 function timingSafeEq(a, b) {
   const ab = Buffer.from(a), bb = Buffer.from(b);
   if (ab.length !== bb.length) return false;
@@ -43,6 +59,7 @@ function serveFile(res, file) {
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://x");
   if (url.pathname === "/healthz") return send(res, 200, "ok");
+  if (isGrafanaPublic(url.pathname)) return proxyGrafana(req, res); // read-only Grafana public dashboards
   if (!authed(req)) {
     res.writeHead(401, { "WWW-Authenticate": 'Basic realm="limit-reset-notifier", charset="UTF-8"' });
     return res.end("auth required");

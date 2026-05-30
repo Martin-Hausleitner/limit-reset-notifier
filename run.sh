@@ -39,5 +39,11 @@ if [ -n "${VCVM_HOST:-}" ]; then
     scp -q dist/notify.json "$VCVM_HOST:limit-reset-notifier/data/notify.json" 2>/dev/null \
       && echo "→ notify.json published to $VCVM_HOST" || true
   fi
+  # Publish Prometheus metrics into node-exporter's textfile collector (atomic rename)
+  if [ -f dist/limit_reset.prom ]; then
+    scp -q dist/limit_reset.prom "$VCVM_HOST:monitoring/textfile-collector/limit_reset.prom.tmp" 2>/dev/null \
+      && ssh -o BatchMode=yes "$VCVM_HOST" 'mv -f ~/monitoring/textfile-collector/limit_reset.prom.tmp ~/monitoring/textfile-collector/limit_reset.prom' 2>/dev/null \
+      && echo "→ metrics published to Prometheus (node-exporter textfile)" || echo "(metrics publish failed)"
+  fi
 fi
 echo "run.sh done"

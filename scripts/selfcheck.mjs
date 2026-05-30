@@ -88,6 +88,22 @@ try {
   add("matrix-room-reachable", false, "room unreachable");
 }
 
+// 7) Grafana / Prometheus KPI pipeline
+try {
+  const promUrl = env.PROM_URL || "http://100.120.120.120:9090";
+  const j = JSON.parse(sh(`curl -s --max-time 12 "${promUrl}/api/v1/query?query=airate_up"`));
+  const v = j.data?.result?.[0]?.value?.[1];
+  add("prometheus-metrics", v === "1", `airate_up=${v ?? "missing"}`);
+} catch {
+  add("prometheus-metrics", false, "prometheus unreachable");
+}
+try {
+  const gUrl = env.GRAFANA_URL || "http://100.120.120.120:3000";
+  add("grafana-dashboard", curlCode(`"${gUrl}/api/dashboards/uid/limit-reset-notifier"`) === "200");
+} catch {
+  add("grafana-dashboard", false, "grafana unreachable");
+}
+
 const failed = checks.filter((c) => !c.pass);
 const result = { ranAt: new Date().toISOString(), allPass: failed.length === 0, checks };
 fs.mkdirSync(path.join(ROOT, "state"), { recursive: true });

@@ -53,6 +53,31 @@ so it's reachable from any phone/browser while staying behind a login.
 
 Each window carries `{ name, windowMinutes, entries:[{capturedAt, resetsAt, usedPercent}] }`.
 
+## Grafana & Prometheus (primary KPI view)
+
+KPIs are exposed as Prometheus metrics and visualised in Grafana (with Grafana's native
+sharing / per-user / per-folder permissions). No extra Prometheus config is needed — the
+collector writes a `.prom` file into node-exporter's **textfile collector**:
+
+```
+collect.mjs → dist/limit_reset.prom ──scp──▶ vcvm:monitoring/textfile-collector/limit_reset.prom
+            node-exporter (--collector.textfile.directory) ──▶ Prometheus ──▶ Grafana dashboard
+```
+
+Metrics (`airate_*`, labelled by `provider` + `window` + `kind`): `used_percent`,
+`remaining_percent`, `reset_timestamp_seconds`, `reset_in_seconds`, `burn_percent_per_hour`,
+`exhaustion_timestamp_seconds`, `window_expired`, `window_unknown_reset`, `tokens_today`,
+`data_age_seconds`, `up`.
+
+```bash
+node scripts/grafana-dashboard.mjs    # create/update the Grafana dashboard (uid limit-reset-notifier)
+```
+
+The dashboard is also published as a **Grafana public dashboard** (read-only token). It is
+reachable off-VPN through the same tunnel via a **path-restricted reverse proxy** in
+`dashboard/server.mjs` that forwards *only* `/public-dashboards/*`, `/api/public/*`, `/public/*`
+to Grafana — the anonymous-admin UI/API stays blocked behind the dashboard's Basic-Auth.
+
 ## Setup
 
 ```bash
