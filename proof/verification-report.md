@@ -43,3 +43,18 @@ All four non-blocking items flagged above were fixed and re-verified:
 
 Re-verification after fixes: `node --test` → **12/12 pass**; dashboard re-screenshot confirms the
 Claude session now shows real usage with "Reset-Zeit unbekannt" (see `proof/dashboard-public.png`).
+
+### Re-verification by a second agent team — PASS (5/5)
+
+A focused 5-agent workflow re-checked each fix with live commands:
+
+| Re-check | Result | Evidence |
+|---|---|---|
+| Claude session reflects newest usage | ✅ | raw newest session = 33% → kpi session = 33%, `resetsAt:null`, `unknownReset:true` (not stale 0%). |
+| Reset detection keys by name (reorder-safe) | ✅ | `detect-core.mjs` uses `w.name \|\| w.label`; 8/8 detect tests incl. reorder-safe test. |
+| `exhaustionAt` second-precision ISO | ✅ | 3 live values, `grep '[.][0-9]{3}Z'` = 0; burn tests 4/4. |
+| Unknown-reset renders without NaN | ✅ | collector + served HTML: 0 `NaN`, "Reset-Zeit unbekannt" branch present. |
+| Full regression + live E2E | ✅ | `node --test` 12/12; `./run.sh --demo` sent event `$mkrO0Fx3…`, read back `m.room.message`/`@openclaw`; screenshot 374 KB. |
+
+**Final verdict: 100% green.** Two independent agent teams (13 + 5 agents) confirm every assigned
+requirement works end-to-end, with all flagged items fixed and re-verified.
