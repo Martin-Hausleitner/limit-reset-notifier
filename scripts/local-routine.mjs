@@ -65,22 +65,20 @@ add("activitywatch_source", awInfo.includes("version") && buckets.includes("cogn
 // 6. dashboards present — heal: rebuild if any missing
 let search = curl(`http://${AUTH}@127.0.0.1:3300/api/search?type=dash-db`);
 let dashCount = (search.match(/"uid"/g) || []).length;
-const EXTRA_UIDS = ["aw-whoop-lab", "ai-agents"];
+const EXTRA_UIDS = ["aw-whoop-lab", "ai-agents", "lrn-weekly", "lrn-index"];
 const missing = [...AI_UIDS, ...AW_UIDS, ...EXTRA_UIDS].filter((u) => !search.includes(`"${u}"`));
 if (missing.length) {
-  sh(`GRAFANA_URL=${GRAF} GRAFANA_DS_UID=prometheus node scripts/grafana-build-all.mjs`);
-  sh(`GRAFANA_URL=${GRAF} GRAFANA_DS_UID=prometheus node scripts/grafana-build-aw.mjs`);
-  sh(`GRAFANA_URL=${GRAF} GRAFANA_DS_UID=prometheus node scripts/grafana-build-whoop-lab.mjs`);
-  sh(`GRAFANA_URL=${GRAF} GRAFANA_DS_UID=prometheus node scripts/grafana-build-agents.mjs`);
+  for (const b of ["grafana-build-all", "grafana-build-aw", "grafana-build-whoop-lab", "grafana-build-agents", "grafana-build-weekly", "grafana-build-index"])
+    sh(`GRAFANA_URL=${GRAF} GRAFANA_DS_UID=prometheus node scripts/${b}.mjs`);
   search = curl(`http://${AUTH}@127.0.0.1:3300/api/search?type=dash-db`);
   dashCount = (search.match(/"uid"/g) || []).length;
 }
-add("dashboards_all", dashCount >= 15, `${dashCount} dashboards`);
+add("dashboards_all", dashCount >= 17, `${dashCount} dashboards`);
 
-// 7. home dashboard = Executive — heal
+// 7. home dashboard = Übersicht/Launcher — heal
 const prefs = curl(`http://${AUTH}@127.0.0.1:3300/api/org/preferences`);
-if (!prefs.includes("lrn-exec")) sh(`curl -s -X PUT http://${AUTH}@127.0.0.1:3300/api/org/preferences -H "Content-Type: application/json" -d '{"homeDashboardUID":"lrn-exec","theme":"dark"}'`);
-add("home_executive", curl(`http://${AUTH}@127.0.0.1:3300/api/org/preferences`).includes("lrn-exec"), "home=lrn-exec");
+if (!prefs.includes("lrn-index")) sh(`curl -s -X PUT http://${AUTH}@127.0.0.1:3300/api/org/preferences -H "Content-Type: application/json" -d '{"homeDashboardUID":"lrn-index","theme":"dark"}'`);
+add("home_index", curl(`http://${AUTH}@127.0.0.1:3300/api/org/preferences`).includes("lrn-index"), "home=lrn-index");
 
 // 8. representative data presence
 const probes = ["airate_used_percent", "aw_whoop_recovery_percent", "aw_time_by_group_seconds_today"];
