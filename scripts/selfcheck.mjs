@@ -77,6 +77,17 @@ try {
   add("launchd-collector", false, "not loaded");
 }
 
+// 6) Matrix notification path reachable (read-only — proves delivery channel, no spam)
+try {
+  const token = process.env.MATRIX_TOKEN || sh(`security find-generic-password -s matrix-archive-sync -a ${os.userInfo().username} -w`);
+  const room = JSON.parse(fs.readFileSync(path.join(ROOT, "state", "room.json"), "utf8")).room_id;
+  const body = sh(`curl -sk --max-time 15 -H "Authorization: Bearer ${token}" "${HS}/_matrix/client/v3/rooms/${encodeURIComponent(room)}/messages?dir=b&limit=1"`);
+  const j = JSON.parse(body);
+  add("matrix-room-reachable", Array.isArray(j.chunk), `read ${j.chunk?.length ?? 0} event(s)`);
+} catch {
+  add("matrix-room-reachable", false, "room unreachable");
+}
+
 const failed = checks.filter((c) => !c.pass);
 const result = { ranAt: new Date().toISOString(), allPass: failed.length === 0, checks };
 fs.mkdirSync(path.join(ROOT, "state"), { recursive: true });
