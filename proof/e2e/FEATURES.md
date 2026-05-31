@@ -14,6 +14,7 @@ committed here. Generated 2026-05-31.
 | 6 | **Follow-up fix:** today-window tiles showed `No data` when empty | ✅ | `proof/e2e/no-data-fix.md` (`or vector(0)` idiom; live before/after queries) · re-captured `proof/grafana/lrn-exec.png` now shows Kosten/Tokens heute |
 | 7 | **Codex tokens/min** (was Claude-only → 0 for Codex) | ✅ | `proof/e2e/codex-tokens-per-minute.md` (parser unit-tested + real rollout → 214 020 tokens) · `src/lib/codex-burn.mjs` + `test/codex-burn.test.mjs` (5 tests). Live reads 0 only while Codex is idle. |
 | 8 | **Docs accuracy + full regression** | ✅ | `proof/e2e/full-suite.txt` (`node --test` → 23 pass / 0 fail) · DASHBOARDS.md count fix (17 dashboards / 249 panels) · README Tests section updated |
+| 9 | **KPI chain: source → Grafana → Cognitor → macOS tray** | ✅ | `proof/e2e/cognitor-sync.md` (AW sync) + `proof/e2e/tray-display.md` (same value 148305 across all 3 hops) + `proof/e2e/tray-ai-limits-card.png` (🔥 AI-Limits tile, live) + `proof/e2e/tray-ai-limits.patch` (tray handoff). Native screencapture TCC-blocked (Martin grants Screen Recording/Accessibility) — documented. |
 
 ## Privacy decision (honoured)
 The repo is **public** and `proof/grafana/` is git-ignored as "personal-data … keep local".

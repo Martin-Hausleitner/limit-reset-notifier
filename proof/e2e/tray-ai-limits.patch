@@ -1,0 +1,165 @@
+diff --git a/apps/tray/src-tauri/src/main.rs b/apps/tray/src-tauri/src/main.rs
+index e89f622..35dc98a 100644
+--- a/apps/tray/src-tauri/src/main.rs
++++ b/apps/tray/src-tauri/src/main.rs
+@@ -48,6 +48,7 @@ struct DashboardSnapshot {
+     services: Vec<ServiceStatus>,
+     weekly_progress: WeeklyProgress,
+     whoop: WhoopSummary,
++    ai_limits: Option<AiLimitsSummary>,
+     weather: Option<WeatherSummary>,
+     today: PeriodSummary,
+     week: PeriodSummary,
+@@ -255,6 +256,20 @@ struct WhoopSummary {
+     recovery_trends: Vec<RecoveryTrendDay>,
+ }
+ 
++// AI-usage limits (Tokens/min + next rate-limit reset), synced from limit-reset-notifier
++// into the aw-watcher-ai-limits bucket. See src/sync-cognitor.mjs in that repo.
++#[derive(Clone, Serialize)]
++#[serde(rename_all = "camelCase")]
++struct AiLimitsSummary {
++    tokens_per_minute: f64,
++    next_reset_label: Option<String>,
++    next_reset_in_seconds: Option<i64>,
++    next_reset_provider: Option<String>,
++    claude_session_used_percent: Option<f64>,
++    codex_session_used_percent: Option<f64>,
++    synced_at: Option<String>,
++}
++
+ #[derive(Clone, Serialize)]
+ #[serde(rename_all = "camelCase")]
+ struct WhoopRing {
+@@ -1146,6 +1161,7 @@ fn activitywatch_bucket_ids(client: &reqwest::blocking::Client) -> Result<Vec<St
+                         || key == &"aw-importer-whoop-workout"
+                         || key == &"aw-importer-whoop-cycle"
+                         || key == &"aw-importer-whoop-recovery"
++                        || key.starts_with("aw-watcher-ai-limits")
+                 })
+                 .cloned()
+                 .collect()
+@@ -1506,6 +1522,7 @@ fn snapshot_from_events(
+         services: service_statuses(reachable),
+         weekly_progress: weekly_progress.clone(),
+         whoop: whoop_summary(&events, window.week_end, window.sleep_trend_days),
++        ai_limits: ai_limits_summary(&events, window.now),
+         weather,
+         story_cards: story_cards(&today, &week, &weekly_progress),
+         today,
+@@ -3613,6 +3630,34 @@ where
+     value
+ }
+ 
++fn ai_limits_summary(events: &[AwEvent], end: DateTime<Utc>) -> Option<AiLimitsSummary> {
++    let latest = events
++        .iter()
++        .filter(|event| {
++            event
++                .data
++                .get("bucket_id")
++                .and_then(|value| value.as_str())
++                .map(|bucket| bucket.starts_with("aw-watcher-ai-limits"))
++                .unwrap_or(false)
++        })
++        .filter(|event| event_time(event).map(|t| t <= end).unwrap_or(false))
++        .max_by_key(|event| event_time(event).map(|t| t.timestamp_millis()).unwrap_or(i64::MIN))?;
++    let data = &latest.data;
++    let num = |key: &str| data.get(key).and_then(|value| value.as_f64());
++    let int = |key: &str| data.get(key).and_then(|value| value.as_i64());
++    let text = |key: &str| data.get(key).and_then(|value| value.as_str()).map(|s| s.to_string());
++    Some(AiLimitsSummary {
++        tokens_per_minute: num("tokens_per_minute").unwrap_or(0.0),
++        next_reset_label: text("next_reset_label"),
++        next_reset_in_seconds: int("next_reset_in_seconds"),
++        next_reset_provider: text("next_reset_provider"),
++        claude_session_used_percent: num("claude_session_used_percent"),
++        codex_session_used_percent: num("codex_session_used_percent"),
++        synced_at: text("synced_at"),
++    })
++}
++
+ fn whoop_summary(events: &[AwEvent], end: DateTime<Utc>, sleep_trend_days: i64) -> WhoopSummary {
+     let latest_sleep = latest_bucket_event(events, "aw-importer-whoop-sleep", end);
+     let latest_recovery = latest_bucket_event(events, "aw-importer-whoop-recovery", end);
+diff --git a/apps/tray/src/main.tsx b/apps/tray/src/main.tsx
+index 68ad0a2..11bcc76 100644
+--- a/apps/tray/src/main.tsx
++++ b/apps/tray/src/main.tsx
+@@ -267,6 +267,7 @@ function App() {
+         comparisonWeek={comparisonSnapshot?.week}
+         weekOffset={weekOffset}
+       />
++      {snapshot.aiLimits && <AiLimitsCard data={snapshot.aiLimits} />}
+       <SharedVitals whoop={snapshot.whoop} />
+       <SharedSleepStages whoop={snapshot.whoop} />
+       <SharedBiometricsCard whoop={snapshot.whoop} activeDays={biometricsDays} onChange={updateBiometricsDays} />
+@@ -511,6 +512,39 @@ function Metric({ label, value, accent, muted }: { label: string; value: string;
+   );
+ }
+ 
++function formatTokensPerMinute(tpm: number): string {
++  if (tpm >= 1_000_000) return `${(tpm / 1_000_000).toFixed(2)}M`;
++  if (tpm >= 1_000) return `${(tpm / 1_000).toFixed(tpm >= 100_000 ? 0 : 1)}K`;
++  return `${Math.round(tpm)}`;
++}
++
++function AiLimitsCard({ data }: { data: NonNullable<DashboardSnapshot["aiLimits"]> }) {
++  const secs = data.nextResetInSeconds;
++  const reset = secs != null
++    ? `in ${Math.floor(secs / 3600)}h ${String(Math.floor((secs % 3600) / 60)).padStart(2, "0")}m`
++    : "—";
++  const provider = data.nextResetProvider ? ` · ${data.nextResetProvider}` : "";
++  const synced = data.syncedAt ? new Date(data.syncedAt).toLocaleTimeString() : "live";
++  return (
++    <section className="section-card">
++      <div className="section-heading">
++        <h2>🔥 AI-Limits</h2>
++        <span className="section-subtle">aktualisiert {synced}</span>
++      </div>
++      <div className="metric-grid">
++        <Metric label="Tokens/min" value={formatTokensPerMinute(data.tokensPerMinute)} accent />
++        <Metric label={`Next Reset${provider}`} value={reset} />
++        {data.claudeSessionUsedPercent != null && (
++          <Metric label="Claude Session" value={`${Math.round(data.claudeSessionUsedPercent)}%`} muted />
++        )}
++        {data.codexSessionUsedPercent != null && (
++          <Metric label="Codex Session" value={`${Math.round(data.codexSessionUsedPercent)}%`} muted />
++        )}
++      </div>
++    </section>
++  );
++}
++
+ const RULE_CATEGORIES: Array<{ key: RuleCategory; label: string }> = [
+   { key: "work", label: "Arbeit" },
+   { key: "private", label: "Privat" },
+diff --git a/apps/tray/src/types.ts b/apps/tray/src/types.ts
+index c882340..39e1ce3 100644
+--- a/apps/tray/src/types.ts
++++ b/apps/tray/src/types.ts
+@@ -116,6 +116,16 @@ export interface WhoopRing {
+   updatedAt?: string;
+ }
+ 
++export interface AiLimitsSummary {
++  tokensPerMinute: number;
++  nextResetLabel?: string | null;
++  nextResetInSeconds?: number | null;
++  nextResetProvider?: string | null;
++  claudeSessionUsedPercent?: number | null;
++  codexSessionUsedPercent?: number | null;
++  syncedAt?: string | null;
++}
++
+ export interface WhoopSummary {
+   rings: WhoopRing[];
+   sleepStages: {
+@@ -216,6 +226,7 @@ export interface DashboardSnapshot {
+   services: ServiceStatus[];
+   weeklyProgress: WeeklyProgress;
+   whoop: WhoopSummary;
++  aiLimits?: AiLimitsSummary | null;
+   weather?: WeatherSummary | null;
+   today: PeriodSummary;
+   week: PeriodSummary;
