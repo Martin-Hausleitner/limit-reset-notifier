@@ -33,8 +33,10 @@ const pie = (t, e, l, o = {}) => panel("piechart", t, [target(e, l, "table")], {
 const tbl = (t, e, l, o = {}) => panel("table", t, [target(e, l, "table")], { w: 24, options: {}, ...o });
 
 // ---- query fragments
-const cwin = (w, extra = "") => `sum(airate_cost_usd_window{provider="claude",role="all",window="${w}"${extra}})`;
-const twin = (w, type = "total") => `sum(airate_tokens_window{provider="claude",role="all",window="${w}",type="${type}"})`;
+// `or vector(0)` so a genuinely-empty window (e.g. "today" early in the day) renders 0,
+// not Grafana's "No data" — keeps the headline tiles always showing a number.
+const cwin = (w, extra = "") => `(sum(airate_cost_usd_window{provider="claude",role="all",window="${w}"${extra}}) or vector(0))`;
+const twin = (w, type = "total") => `(sum(airate_tokens_window{provider="claude",role="all",window="${w}",type="${type}"}) or vector(0))`;
 const hitAll = (w) => `sum(airate_tokens_window{provider="claude",type="cache_read",role="all",window="${w}"}) / clamp_min(sum(airate_tokens_window{provider="claude",type="cache_read",role="all",window="${w}"}) + sum(airate_tokens_window{provider="claude",type="input",role="all",window="${w}"}), 1)`;
 
 const DASHBOARDS = [

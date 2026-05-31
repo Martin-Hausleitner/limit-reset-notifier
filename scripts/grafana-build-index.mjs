@@ -24,7 +24,7 @@ stat("🔥 Tokens/min (LIVE)", "sum(ai_agent_tokens_per_minute_total)", { bg: tr
 stat("🟢 Agenten live", "sum(ai_agents_running_total)", { bg: true, w: 4, color: { mode: "fixed", fixedColor: "green" } });
 stat("⚡ Arbeiten gerade", "sum(ai_agents_active)", { bg: true, w: 4, color: { mode: "fixed", fixedColor: "blue" } });
 stat("💸 Live-Burn $/15min", "sum(ai_agent_session_cost_recent_usd)", { bg: true, w: 4, unit: "currencyUSD", color: { mode: "fixed", fixedColor: "red" } });
-stat("💰 Kosten heute", "sum(airate_cost_usd_window{window=\"today\"})", { w: 4, unit: "currencyUSD", color: { mode: "fixed", fixedColor: "orange" } });
+stat("💰 Kosten heute", "(sum(airate_cost_usd_window{window=\"today\"}) or vector(0))", { w: 4, unit: "currencyUSD", color: { mode: "fixed", fixedColor: "orange" } });
 stat("🫀 Recovery", "aw_whoop_recovery_percent", { w: 4, unit: "percent", color: { mode: "thresholds" }, thresholds: { mode: "absolute", steps: [{ value: null, color: "red" }, { value: 34, color: "yellow" }, { value: 67, color: "green" }] } });
 stat("⏱ Heute gearbeitet", "aw_work_seconds_today", { w: 4, unit: "s", color: { mode: "fixed", fixedColor: "purple" } });
 

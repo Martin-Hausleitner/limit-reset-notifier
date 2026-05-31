@@ -34,7 +34,7 @@ stat("🧟 Stale (>3h, 0% CPU)", 'sum(ai_agents_stale{host=~"$host"})', { w: 3, 
 stat("Peak heute", 'max_over_time((sum(ai_agents_running_total{host=~"$host"}))[24h:30s])', { w: 3, color: { mode: "fixed", fixedColor: "orange" } });
 stat("Agent-Stunden heute", 'sum(sum_over_time(ai_agents_running_total{host=~"$host"}[24h])) * 5 / 3600', { w: 3, unit: "h", color: { mode: "fixed", fixedColor: "purple" } });
 stat("💸 Live-Burn $/15min", 'sum(ai_agent_session_cost_recent_usd{host=~"$host"})', { w: 3, unit: "currencyUSD", bg: true, color: { mode: "fixed", fixedColor: "red" } });
-stat("Kosten heute", "sum(airate_cost_usd_window{window=\"today\"})", { w: 3, unit: "currencyUSD", color: { mode: "fixed", fixedColor: "orange" } });
+stat("Kosten heute", "(sum(airate_cost_usd_window{window=\"today\"}) or vector(0))", { w: 3, unit: "currencyUSD", color: { mode: "fixed", fixedColor: "orange" } });
 
 // ── 2) ★ THE centerpiece: token throughput (tokens/min) over time, stacked by tool ──
 ts("🔥 Tokens/min über Zeit (je Tool) — Auslastung", [
