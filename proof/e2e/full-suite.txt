@@ -1,0 +1,36 @@
+=== Final full regression: node --test (all test/) — 2026-05-31T00:43:35Z ===
+✔ increasing usage → positive burn + correct exhaustion projection (2.186542ms)
+✔ slow burn that outlasts the reset → exhaustsBeforeReset false (0.169792ms)
+✔ flat usage → ~0 burn, no projection (0.381583ms)
+✔ single sample → null (cannot estimate) (0.195458ms)
+✔ sums total_tokens for token_count events inside the window (2.158042ms)
+✔ excludes events older than the window (0.074875ms)
+✔ ignores non-token_count lines, other payloads, and malformed JSON (0.072959ms)
+✔ events without a parseable timestamp are skipped (0.054875ms)
+✔ real Codex rollout logs parse to a positive token total (when present) (44.195125ms)
+✔ first observation only seeds state, emits no event (0.748833ms)
+✔ genuine reset fires exactly one REAL (non-demo) event (0.078333ms)
+✔ mid-window usage increase does NOT fire (0.053417ms)
+✔ new window but still heavily used does NOT fire (0.1855ms)
+✔ does not re-notify the same reset (dedup) (0.128542ms)
+✔ demoEvent targets the most-constrained provider (0.116417ms)
+✔ windows are matched by name, not array index (reorder-safe) (0.103084ms)
+✔ window with unknown reset time (null) emits no event (0.065333ms)
+✅ 1 · Executive Overview                     327 KB  /tmp/claude-501/lrn-shots-e2e-463xi7/shots/lrn-exec.png
+✅ 16 · KI-Agenten — Live & Verlauf           975 KB  /tmp/claude-501/lrn-shots-e2e-463xi7/shots/ai-agents.png
+
+2 dashboards → ../../../../tmp/claude-501/lrn-shots-e2e-463xi7/README.md (gallery injected)
+✔ grafana-shots: screenshots all dashboards and injects a README gallery (43975.657625ms)
+✔ buildKpiProm yields 1000+ valid prometheus series (requires CodexBar data) (494.466542ms)
+✔ buildKpiProm output is well-formed exposition (511.724917ms)
+✔ emits valid prometheus exposition with provider/window labels (0.905084ms)
+✔ unknown-reset window omits reset/exhaustion series; never NaN (0.13775ms)
+✔ every emitted metric has HELP and TYPE (0.090958ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44068.370875

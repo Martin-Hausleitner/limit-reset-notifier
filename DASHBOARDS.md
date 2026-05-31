@@ -1,7 +1,7 @@
 # Grafana-Dashboards — Übersicht
 
 Lokales Grafana: **http://127.0.0.1:3300** (Home = Dashboard 1). Start: `bash local-stack/start-native.sh`.
-Stand: 2026-05-31 · 15 Dashboards · 220 Panels.
+Stand: 2026-05-31 · 17 Dashboards · 249 Panels.
 
 > **★ Zentrale KPI — Tokens/min (live):** `ai_agent_tokens_per_minute{tool}` / `…_total` — der
 > 15-min-Token-Burn pro Session als **Rate** (Tokens UND Zeit kombiniert). Sie ist die

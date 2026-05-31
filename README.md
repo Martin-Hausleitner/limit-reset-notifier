@@ -212,12 +212,15 @@ bash deploy/tunnel-url.sh        # ssh-es in and greps the journal
 ### Tests
 
 ```bash
-node --test            # unit tests for the reset-detection core (src/lib/detect-core.mjs)
+node --test                                          # 23 tests, auto-discovered from test/
+PW_PATH="$(npm root -g)/playwright" node --test test/grafana-shots.e2e.mjs   # dashboard→README E2E
 ```
 
-Covers: a genuine reset fires exactly one real event; mid‑window usage increases don't;
-a freshly‑rolled-but-still-busy window doesn't; the same reset is never notified twice; and the
-burn‑rate / exhaustion‑projection math (`src/lib/burn.mjs`).
+Covers: reset-detection core (one event per genuine reset, never double-notified, mid-window
+noise ignored); burn-rate / exhaustion-projection math (`src/lib/burn.mjs`); the 1000+ KPI
+exposition (`src/lib/kpis.mjs`, well-formed Prometheus, HELP/TYPE on every metric); the Codex
+tokens/min parser (`src/lib/codex-burn.mjs`, incl. a real-rollout extraction); and an
+end-to-end test of the dashboard→README screenshot pipeline (auto-skips when Grafana is absent).
 
 ## Proof / end‑to‑end evidence
 
