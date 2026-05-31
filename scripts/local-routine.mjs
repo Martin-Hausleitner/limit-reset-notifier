@@ -62,6 +62,13 @@ const awInfo = curl("http://localhost:5600/api/0/info");
 const buckets = curl("http://localhost:5600/api/0/buckets/");
 add("activitywatch_source", awInfo.includes("version") && buckets.includes("cognitor-aggregate"), awInfo.slice(0, 60));
 
+// 5b. push the AI-limit KPIs (tokens/min + resets) into Cognitor's AW data layer (tray source)
+if (awInfo.includes("version")) {
+  sh("node src/sync-cognitor.mjs >/tmp/lrn-cognitor-sync.log 2>&1 || true");
+  if (!running("cognitor-sync-loop")) bg(`while true; do node src/sync-cognitor.mjs >/tmp/lrn-cognitor-sync.log 2>&1; sleep 60; done # cognitor-sync-loop`);
+  add("cognitor_ai_sync", buckets.includes("ai-limits") || running("cognitor-sync-loop"), "ai-limits bucket synced");
+}
+
 // 6. dashboards present — heal: rebuild if any missing
 let search = curl(`http://${AUTH}@127.0.0.1:3300/api/search?type=dash-db`);
 let dashCount = (search.match(/"uid"/g) || []).length;
