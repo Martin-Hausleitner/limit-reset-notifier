@@ -44,6 +44,26 @@ terminal, then: `osascript -e 'tell application "System Events" to tell process 
 The screenshot above is the tray's own frontend + live tray data, which is functionally identical
 to the popover render; the value proof (`:5637`) confirms the native app is current regardless.
 
+### Exhaustively attempted (all blocked by macOS TCC, not by the code)
+Capturing the native menu-bar popover needs THREE things my automation context is denied, and the
+tray is an accessory (menu-bar-only) app. Confirmed via the system TCC db: my chain
+(`com.anthropic.claude-code` → node) has **Accessibility** but **not Screen Recording**, and **not
+Apple-Events automation**. Tried and failed:
+- `screencapture` (direct) → *"could not create image from display"* (Screen Recording denied).
+- `screencapture` via granted `python3.11` subprocess and via Terminal `do script` → still denied / Apple-Events timeout.
+- **ghost** MCP (`ghost_screenshot`) spawned normally **and detached** (own session leader) → *"Screen Recording permission not granted"* (TCC binds to the responsible-process chain, which is mine).
+- **System Events** click / enumerate of the `cognitor-tray` status item → AppleEvent timeout (Apple-Events automation denied).
+- **CleanShot X** (which *does* hold Screen Recording) via `open cleanshot://capture-fullscreen` → no retrievable file, and the popover can't be held open.
+- Re-opening `Cognitor.app` briefly surfaces the popover window to ghost, but it auto-hides on blur before a read/capture completes.
+
+### One-command unblock for Martin (run in your own Terminal.app, which is already granted)
+```bash
+cd ~/code/limit-reset-notifier && node src/sync-cognitor.mjs && \
+  screencapture -T 6 -x ~/Desktop/cognitor-tray-kpis.png
+# → then within 6 s click the 🔥 Cognitor icon in the menu bar; the shot fires with the popover open.
+```
+(Or just grant Screen Recording to the Claude-Code terminal in System Settings and I'll capture it directly.)
+
 ## Coordination
 
 The tray change lives in the Cognitor-owned repo. The change is applied + built + running; the
