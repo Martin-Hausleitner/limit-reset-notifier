@@ -11,6 +11,7 @@ committed here. Generated 2026-05-31.
 | 3 | **Skill** that implements the whole screenshot→README workflow | ✅ | `.claude/skills/grafana-readme-shots/SKILL.md` |
 | 4 | **End-to-end test** of the pipeline | ✅ | `proof/e2e/grafana-shots-e2e.txt` (1 pass) · `proof/e2e/unit-tests.txt` (17 pass) · `test/grafana-shots.e2e.mjs` |
 | 5 | **Commit + push**, GitHub link, 10 shots readable in the README (mobile-friendly) | ✅ | `proof/e2e/github-live.txt` (10 KPI images HTTP 200 on `master`; health boards 404; PR #1 MERGED) · live: <https://github.com/Martin-Hausleitner/limit-reset-notifier#dashboard-gallery> |
+| 6 | **Follow-up fix:** today-window tiles showed `No data` when empty | ✅ | `proof/e2e/no-data-fix.md` (`or vector(0)` idiom; live before/after queries) · re-captured `proof/grafana/lrn-exec.png` now shows Kosten/Tokens heute |
 
 ## Privacy decision (honoured)
 The repo is **public** and `proof/grafana/` is git-ignored as "personal-data … keep local".
