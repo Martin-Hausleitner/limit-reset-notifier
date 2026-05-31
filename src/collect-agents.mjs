@@ -8,6 +8,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { sumCodexTokens } from "./lib/codex-burn.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = process.env.AGENTS_PROM_FILE || path.join(ROOT, "dist", "agents.prom");
@@ -102,6 +103,33 @@ function burnFor(sid) {
   return { recentTok, recentCost: +recentCost.toFixed(4), model };
 }
 
+// ── live Codex token burn (last 15 min) from ~/.codex/sessions rollout JSONL ──
+// Codex doesn't expose a per-process session id, so we can't map burn to a single PID
+// like Claude. Instead we sum the trailing-15-min token usage across all rollout files
+// touched recently — an aggregate that reflects current Codex throughput. Each
+// `event_msg`/`token_count` carries info.last_token_usage.total_tokens for that turn.
+function codexRecentTokens() {
+  const base = path.join(os.homedir(), ".codex", "sessions");
+  // only today's + yesterday's date-partitioned dirs (sessions/YYYY/MM/DD/) — cheap
+  const dayDirs = [0, 1].map((off) => {
+    const dt = new Date(NOW - off * 86400000);
+    return path.join(base, String(dt.getFullYear()), String(dt.getMonth() + 1).padStart(2, "0"), String(dt.getDate()).padStart(2, "0"));
+  });
+  let total = 0;
+  for (const dir of dayDirs) {
+    let ents; try { ents = fs.readdirSync(dir); } catch { continue; }
+    for (const name of ents) {
+      if (!name.startsWith("rollout-") || !name.endsWith(".jsonl")) continue;
+      const fp = path.join(dir, name);
+      try { if (NOW - fs.statSync(fp).mtimeMs > 20 * 60000) continue; } catch { continue; } // not touched recently
+      let buf;
+      try { const fd = fs.openSync(fp, "r"); const size = fs.fstatSync(fd).size; const len = Math.min(size, 512 * 1024); buf = Buffer.alloc(len); fs.readSync(fd, buf, 0, len, size - len); fs.closeSync(fd); } catch { continue; }
+      total += sumCodexTokens(buf.toString("utf8"), NOW, 900000);
+    }
+  }
+  return total;
+}
+
 // ── scan processes ──
 const ACTIVE_CPU = 5, STALE_CPU = 1, STALE_AGE = 3 * 3600;
 const perTool = {}; let total = 0, nActive = 0, nIdle = 0, nStale = 0;
@@ -150,10 +178,15 @@ const BURN_WINDOW_MIN = 900000 / 60000; // 15 min, matches burnFor() cutoff
 const tpmByTool = {};
 let tpmTotal = 0;
 for (const [, o] of sessions) {
-  if (!o.burn || !o.burn.recentTok) continue;
+  if (!o.burn || !o.burn.recentTok) continue; // Claude per-session burn (from JSONL)
   const tpm = o.burn.recentTok / BURN_WINDOW_MIN;
   tpmByTool[o.tool] = (tpmByTool[o.tool] || 0) + tpm;
   tpmTotal += tpm;
+}
+// Codex: aggregate trailing-15-min burn across recent rollout files (no per-PID mapping)
+if (perTool.codex) {
+  const codexTpm = codexRecentTokens() / BURN_WINDOW_MIN;
+  if (codexTpm > 0) { tpmByTool.codex = (tpmByTool.codex || 0) + codexTpm; tpmTotal += codexTpm; }
 }
 // emit a line for every running tool so idle tools show 0 (Claude vs Codex stay comparable)
 const tpmTools = [...new Set([...Object.keys(tpmByTool), ...TOOLS.filter((t) => perTool[t])])];

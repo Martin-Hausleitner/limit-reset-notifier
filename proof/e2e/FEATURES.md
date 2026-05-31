@@ -12,6 +12,7 @@ committed here. Generated 2026-05-31.
 | 4 | **End-to-end test** of the pipeline | ✅ | `proof/e2e/grafana-shots-e2e.txt` (1 pass) · `proof/e2e/unit-tests.txt` (17 pass) · `test/grafana-shots.e2e.mjs` |
 | 5 | **Commit + push**, GitHub link, 10 shots readable in the README (mobile-friendly) | ✅ | `proof/e2e/github-live.txt` (10 KPI images HTTP 200 on `master`; health boards 404; PR #1 MERGED) · live: <https://github.com/Martin-Hausleitner/limit-reset-notifier#dashboard-gallery> |
 | 6 | **Follow-up fix:** today-window tiles showed `No data` when empty | ✅ | `proof/e2e/no-data-fix.md` (`or vector(0)` idiom; live before/after queries) · re-captured `proof/grafana/lrn-exec.png` now shows Kosten/Tokens heute |
+| 7 | **Codex tokens/min** (was Claude-only → 0 for Codex) | ✅ | `proof/e2e/codex-tokens-per-minute.md` (parser unit-tested + real rollout → 214 020 tokens) · `src/lib/codex-burn.mjs` + `test/codex-burn.test.mjs` (5 tests). Live reads 0 only while Codex is idle. |
 
 ## Privacy decision (honoured)
 The repo is **public** and `proof/grafana/` is git-ignored as "personal-data … keep local".
