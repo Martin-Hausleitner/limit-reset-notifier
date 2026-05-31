@@ -130,6 +130,39 @@ function codexRecentTokens() {
   return total;
 }
 
+// ── live Claude token burn (last 15 min) AGGREGATE across recent session JSONLs ──
+// burnFor() keys burn to a PID-discovered session id, but a running agent whose
+// session id can't be mapped to its process (e.g. this very session) would be missed,
+// leaving the headline tokens/min at 0 while real burn is happening. Mirror the Codex
+// approach: walk ~/.claude/projects/*/*.jsonl touched in the last 20 min and sum the
+// trailing-15-min usage directly — PID-independent, so the rate always reflects reality.
+function claudeRecentTokens() {
+  const base = path.join(os.homedir(), ".claude", "projects");
+  let projs; try { projs = fs.readdirSync(base); } catch { return 0; }
+  let total = 0;
+  for (const proj of projs) {
+    const dir = path.join(base, proj);
+    let files; try { files = fs.readdirSync(dir); } catch { continue; }
+    for (const name of files) {
+      if (!name.endsWith(".jsonl")) continue;
+      const fp = path.join(dir, name);
+      try { if (NOW - fs.statSync(fp).mtimeMs > 20 * 60000) continue; } catch { continue; } // not touched recently
+      let buf;
+      try { const fd = fs.openSync(fp, "r"); const size = fs.fstatSync(fd).size; const len = Math.min(size, 512 * 1024); buf = Buffer.alloc(len); fs.readSync(fd, buf, 0, len, size - len); fs.closeSync(fd); } catch { continue; }
+      const lines = buf.toString("utf8").split("\n"); lines.shift(); // drop partial first line
+      for (const line of lines) {
+        if (!line.includes('"usage"')) continue;
+        let d; try { d = JSON.parse(line); } catch { continue; }
+        const u = (d.message || {}).usage; if (!u) continue;
+        const ts = d.timestamp ? Date.parse(d.timestamp) : 0;
+        if (NOW - ts > 900000) continue; // last 15 min only
+        total += (u.input_tokens || 0) + (u.output_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0);
+      }
+    }
+  }
+  return total;
+}
+
 // ── scan processes ──
 const ACTIVE_CPU = 5, STALE_CPU = 1, STALE_AGE = 3 * 3600;
 const perTool = {}; let total = 0, nActive = 0, nIdle = 0, nStale = 0;
@@ -177,12 +210,10 @@ emit("ai_agent_session_cost_recent_usd", "USD burned in last 15 min per session"
 const BURN_WINDOW_MIN = 900000 / 60000; // 15 min, matches burnFor() cutoff
 const tpmByTool = {};
 let tpmTotal = 0;
-for (const [, o] of sessions) {
-  if (!o.burn || !o.burn.recentTok) continue; // Claude per-session burn (from JSONL)
-  const tpm = o.burn.recentTok / BURN_WINDOW_MIN;
-  tpmByTool[o.tool] = (tpmByTool[o.tool] || 0) + tpm;
-  tpmTotal += tpm;
-}
+// Claude: aggregate trailing-15-min burn across recent session JSONLs (PID-independent,
+// so an unmapped-but-active session still counts). See claudeRecentTokens().
+const claudeTpm = claudeRecentTokens() / BURN_WINDOW_MIN;
+if (claudeTpm > 0) { tpmByTool.claude = (tpmByTool.claude || 0) + claudeTpm; tpmTotal += claudeTpm; }
 // Codex: aggregate trailing-15-min burn across recent rollout files (no per-PID mapping)
 if (perTool.codex) {
   const codexTpm = codexRecentTokens() / BURN_WINDOW_MIN;

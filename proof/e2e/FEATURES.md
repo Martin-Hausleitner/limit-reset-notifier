@@ -6,7 +6,7 @@ committed here. Generated 2026-05-31.
 
 | # | Feature (requested) | Status | Evidence in git |
 |---|---|:--:|---|
-| 1 | **Central KPI: Tokens/min** (tokens AND time combined as a rate) + prominent panel | ✅ | `proof/e2e/tokens-per-minute.md` (collector emit + live Prometheus query) · `proof/e2e/tokens-per-minute-agents-headline.png` (live-agents headline tile + per-tool timeseries, privacy-cropped) · `proof/grafana/lrn-exec.png` (public Executive Overview headline + trend) · code: `src/collect-agents.mjs`, `scripts/grafana-build-{all,agents,index}.mjs` |
+| 1 | **Central KPI: Tokens/min** (tokens AND time combined as a rate) + prominent panel | ✅ | `proof/e2e/tokens-per-minute.md` (collector emit + live Prometheus query) · `proof/e2e/tokens-per-minute-pid-independent-fix.md` + `proof/e2e/lrn-exec.png` (**headline reads live 620 K/min; fixed PID-independent so it no longer reads 0 during active burn**) · `proof/e2e/tokens-per-minute-agents-headline.png` (live-agents headline tile + per-tool timeseries, privacy-cropped) · code: `src/collect-agents.mjs`, `scripts/grafana-build-{all,agents,index}.mjs` |
 | 2 | **Screenshot every Grafana dashboard** + embed gallery in README | ✅ | `proof/e2e/capture-all-dashboards.txt` (all **17** dashboards captured, gallery count 17, every PNG non-blank) · `scripts/grafana-shots.mjs` |
 | 3 | **Skill** that implements the whole screenshot→README workflow | ✅ | `.claude/skills/grafana-readme-shots/SKILL.md` |
 | 4 | **End-to-end test** of the pipeline | ✅ | `proof/e2e/grafana-shots-e2e.txt` (1 pass) · `proof/e2e/unit-tests.txt` (17 pass) · `test/grafana-shots.e2e.mjs` |
