@@ -39,7 +39,7 @@ async function api(p) {
 
 // optional: regenerate all dashboards first so the gallery reflects the latest build scripts
 if (process.env.REBUILD === "1") {
-  for (const b of ["grafana-build-all", "grafana-build-aw", "grafana-build-whoop-lab", "grafana-build-weekly", "grafana-build-agents", "grafana-build-index"]) {
+  for (const b of ["grafana-build-all", "grafana-build-aw", "grafana-build-whoop-lab", "grafana-build-weekly", "grafana-build-agents", "grafana-build-fusion", "grafana-build-big-display", "grafana-build-index"]) {
     try { execSync(`GRAFANA_URL=${BASE} GRAFANA_DS_UID=${process.env.GRAFANA_DS_UID || "prometheus"} node ${path.join(ROOT, "scripts", b + ".mjs")}`, { stdio: "inherit" }); }
     catch { console.error(`! rebuild ${b} failed (continuing)`); }
   }

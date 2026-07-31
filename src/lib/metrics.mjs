@@ -22,6 +22,9 @@ const HELP = {
   airate_exhaustion_timestamp_seconds: "Projected unix time the window is exhausted at current pace",
   airate_exhausts_before_reset: "1 if projected to exhaust before its reset",
   airate_tokens_today: "Approximate tokens used today",
+  airate_account_used_percent: "Percent of a provider account limit window already consumed",
+  airate_account_remaining_percent: "Percent of a provider account limit window still available",
+  airate_account_reset_in_seconds: "Seconds until a provider account limit window resets",
 };
 
 export function snapshotToProm(snap) {
@@ -48,6 +51,14 @@ export function snapshotToProm(snap) {
         add("airate_exhaustion_timestamp_seconds", L, Math.round(Date.parse(w.exhaustionAt) / 1000));
         add("airate_exhausts_before_reset", L, w.exhaustsBeforeReset ? 1 : 0);
       }
+    }
+  }
+  for (const a of snap.accounts?.codex || []) {
+    for (const w of a.windows || []) {
+      const L = { provider: "codex", account: a.short || a.key, preferred: a.preferred ? "true" : "false", window: w.name || w.label, kind: w.kind };
+      add("airate_account_used_percent", L, w.usedPercent);
+      add("airate_account_remaining_percent", L, w.remainingPercent);
+      if (w.resetsAt) add("airate_account_reset_in_seconds", L, w.resetsInSeconds);
     }
   }
   const c = snap.consumption?.today || {};

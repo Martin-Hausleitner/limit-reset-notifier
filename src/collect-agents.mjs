@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-// collect-agents.mjs — running AI coding agents (Claude/Codex/OpenCode/Antigravity/Gemini)
+// collect-agents.mjs — running AI coding agents (Claude/Codex/OpenCode/AGY/Gemini)
 // → live parallel-agents metrics + per-session ENRICHMENT: CPU%, status (active/idle/stale),
 // working dir, and live token/cost burn from Claude session JSONL (last 15 min).
 // host label distinguishes machines. Writes dist/agents.prom.
 import { execSync } from "node:child_process";
 import fs from "node:fs";
+import http from "node:http";
+import https from "node:https";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -37,7 +39,8 @@ function classify(comm) {
   if (base === "codex") return "codex";
   if (base === "opencode") return "opencode";
   if (base === "gemini") return "gemini";
-  if (base === "antigravity" || base === "Antigravity") return "antigravity";
+  if (base === "agy" || base === "antigravity" || base === "Antigravity") return "agy";
+  if (base === "language_server_macos_arm" && /antigravity/i.test(comm)) return "agy";
   return null;
 }
 
@@ -163,6 +166,68 @@ function claudeRecentTokens() {
   return total;
 }
 
+async function postJson(proto, port, csrfToken, body) {
+  const lib = proto === "https" ? https : http;
+  const data = JSON.stringify(body);
+  return await new Promise((resolve) => {
+    const req = lib.request({
+      hostname: "127.0.0.1",
+      port,
+      path: "/exa.language_server_pb.LanguageServerService/GetUserStatus",
+      method: "POST",
+      rejectUnauthorized: false,
+      timeout: 1500,
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(data),
+        "Connect-Protocol-Version": "1",
+        "X-Codeium-Csrf-Token": csrfToken,
+      },
+    }, (res) => {
+      let raw = "";
+      res.on("data", (chunk) => { raw += chunk; });
+      res.on("end", () => {
+        if (res.statusCode !== 200 || !raw.trim().startsWith("{")) return resolve(null);
+        try { resolve(JSON.parse(raw)); } catch { resolve(null); }
+      });
+    });
+    req.on("error", () => resolve(null));
+    req.on("timeout", () => { req.destroy(); resolve(null); });
+    req.write(data);
+    req.end();
+  });
+}
+
+function agyCandidates() {
+  const out = [];
+  for (const line of argsRaw.split("\n")) {
+    if (!/language_server_macos_arm/.test(line) || !/csrf_token/.test(line) || !/antigravity/i.test(line)) continue;
+    const pid = line.trim().match(/^(\d+)/)?.[1];
+    if (!pid) continue;
+    const tokens = [...line.matchAll(/--(?:csrf_token|extension_server_csrf_token)[= ]([a-zA-Z0-9-]+)/g)].map((m) => m[1]);
+    const argPorts = [...line.matchAll(/--(?:extension_server_port|https_server_port|lsp_port)[= ](\d+)/g)].map((m) => m[1]);
+    const lsof = sh(`lsof -a -iTCP -sTCP:LISTEN -n -P -p ${pid} 2>/dev/null`);
+    const listenPorts = [...lsof.matchAll(/TCP\s+127\.0\.0\.1:(\d+)\s+\(LISTEN\)/g)].map((m) => m[1]);
+    out.push({ ports: [...new Set([...argPorts, ...listenPorts])], tokens: [...new Set(tokens)] });
+  }
+  return out;
+}
+
+async function agyUserStatus() {
+  const body = { metadata: { ideName: "antigravity", extensionName: "antigravity", locale: "en" } };
+  for (const candidate of agyCandidates()) {
+    for (const port of candidate.ports) {
+      for (const token of candidate.tokens) {
+        for (const proto of ["https", "http"]) {
+          const data = await postJson(proto, port, token, body);
+          if (data?.userStatus) return data.userStatus;
+        }
+      }
+    }
+  }
+  return null;
+}
+
 // ── scan processes ──
 const ACTIVE_CPU = 5, STALE_CPU = 1, STALE_AGE = 3 * 3600;
 const perTool = {}; let total = 0, nActive = 0, nIdle = 0, nStale = 0;
@@ -190,7 +255,7 @@ for (const a of agents) {
 const L = [];
 const esc = (s) => String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"').slice(0, 70);
 const emit = (name, help, type, samples) => { if (!samples.length) return; L.push(`# HELP ${name} ${help}`, `# TYPE ${name} ${type}`); for (const { l, v } of samples) { if (v == null || Number.isNaN(v)) continue; const lbl = Object.entries(l).map(([k, x]) => `${k}="${esc(x)}"`).join(","); L.push(`${name}{${lbl}} ${v}`); } };
-const TOOLS = ["claude", "codex", "opencode", "antigravity", "gemini"];
+const TOOLS = ["claude", "codex", "agy", "opencode", "gemini"];
 emit("ai_agents_running", "Running AI agents per tool", "gauge", TOOLS.map((t) => ({ l: { tool: t, host: HOST }, v: perTool[t] || 0 })));
 emit("ai_agents_running_total", "Total running AI agents", "gauge", [{ l: { host: HOST }, v: total }]);
 emit("ai_agents_active", "Agents actively working (CPU≥5%)", "gauge", [{ l: { host: HOST }, v: nActive }]);
@@ -219,10 +284,39 @@ if (perTool.codex) {
   const codexTpm = codexRecentTokens() / BURN_WINDOW_MIN;
   if (codexTpm > 0) { tpmByTool.codex = (tpmByTool.codex || 0) + codexTpm; tpmTotal += codexTpm; }
 }
-// emit a line for every running tool so idle tools show 0 (Claude vs Codex stay comparable)
-const tpmTools = [...new Set([...Object.keys(tpmByTool), ...TOOLS.filter((t) => perTool[t])])];
+// Emit every known tool so daily panels keep Codex/Claude/AGY visible even
+// when a tool is idle or token burn is unavailable (0 is better than a disappearing line).
+const tpmTools = TOOLS;
 emit("ai_agent_tokens_per_minute", "Token burn rate per tool (tokens/min, trailing 15-min window)", "gauge", tpmTools.map((t) => ({ l: { tool: t, host: HOST }, v: +(tpmByTool[t] || 0).toFixed(1) })));
 emit("ai_agent_tokens_per_minute_total", "Total token burn rate (tokens/min, trailing 15-min window)", "gauge", [{ l: { host: HOST }, v: +tpmTotal.toFixed(1) }]);
+
+const agyStatus = await agyUserStatus();
+if (agyStatus) {
+  const plan = agyStatus.planStatus || {};
+  const monthly = Number(plan.planInfo?.monthlyPromptCredits || 0);
+  const available = Number(plan.availablePromptCredits || 0);
+  if (monthly > 0) {
+    emit("ai_agy_prompt_credits_available", "AGY available prompt credits from local Antigravity status", "gauge", [{ l: { host: HOST }, v: available }]);
+    emit("ai_agy_prompt_credits_monthly", "AGY monthly prompt credits from local Antigravity status", "gauge", [{ l: { host: HOST }, v: monthly }]);
+    emit("ai_agy_prompt_credits_used_percent", "AGY prompt credits used percent", "gauge", [{ l: { host: HOST }, v: +(((monthly - available) / monthly) * 100).toFixed(2) }]);
+    emit("ai_agy_prompt_credits_remaining_percent", "AGY prompt credits remaining percent", "gauge", [{ l: { host: HOST }, v: +((available / monthly) * 100).toFixed(2) }]);
+  }
+  const models = agyStatus.cascadeModelConfigData?.clientModelConfigs || [];
+  const rows = models.filter((m) => m?.quotaInfo).map((m) => {
+    const reset = Date.parse(m.quotaInfo.resetTime || "");
+    const remaining = Number(m.quotaInfo.remainingFraction);
+    return {
+      model: m.modelOrAlias?.model || "unknown",
+      label: m.label || m.modelOrAlias?.model || "unknown",
+      remainingPercent: Number.isFinite(remaining) ? +(remaining * 100).toFixed(2) : 0,
+      resetIn: Number.isFinite(reset) ? Math.max(0, Math.round((reset - NOW) / 1000)) : 0,
+      exhausted: remaining === 0 ? 1 : 0,
+    };
+  });
+  emit("ai_agy_model_quota_remaining_percent", "AGY model quota remaining percent", "gauge", rows.map((r) => ({ l: { host: HOST, model: r.model, label: r.label }, v: r.remainingPercent })));
+  emit("ai_agy_model_quota_reset_in_seconds", "AGY model quota reset in seconds", "gauge", rows.map((r) => ({ l: { host: HOST, model: r.model, label: r.label }, v: r.resetIn })));
+  emit("ai_agy_model_quota_exhausted", "AGY model quota exhausted flag", "gauge", rows.map((r) => ({ l: { host: HOST, model: r.model, label: r.label }, v: r.exhausted })));
+}
 
 emit("ai_collector_up", "Agent collector heartbeat", "gauge", [{ l: { host: HOST }, v: 1 }]);
 

@@ -28,6 +28,16 @@ function panel(type, t, targets, { unit = "short", w = 6, h = 7, thresholds, opt
     gridPos: { x: 0, y: 0, w, h },
   };
 }
+function header(t, body, { w = 24, h = 3 } = {}) {
+  return {
+    id: 0,
+    title: "",
+    type: "text",
+    options: { mode: "markdown", content: `## ${t}\n${body}` },
+    fieldConfig: { defaults: {}, overrides: [] },
+    gridPos: { x: 0, y: 0, w, h },
+  };
+}
 // compact, bold stat (background colour = punchy)
 // neutral text colour when the value has no good/bad direction (avoids false-alarm red)
 const S = (t, e, l, o = {}) => panel("stat", t, [target(e, l, "instant")], { h: 6, color: o.color || (o.thresholds ? { mode: "thresholds" } : { mode: "fixed", fixedColor: "text" }), options: { reduceOptions: { calcs: ["lastNotNull"] }, graphMode: "none", textMode: "value", colorMode: o.bg ? "background" : "value", justifyMode: "center" }, ...o });
@@ -69,6 +79,7 @@ const HRS = "s"; // seconds → Grafana renders h/m
 const DASHBOARDS = [
   // ───────────────────────── 11 · WHOOP (recovery & sleep, app-style) ─────────
   { uid: "aw-whoop", title: "11 · WHOOP — Recovery & Schlaf", tags: ["aw", "whoop", "health"], time: "now-30d", panels: [
+    header("WHOOP Heute", "Recovery, Schlaf, HRV und Belastung in einer kompakten Tagesansicht."),
     // today at a glance — compact strip (8 key values)
     S("Recovery", "aw_whoop_recovery_percent", "", { unit: "percent", thresholds: RECOV, bg: true, w: 3, h: 4, color: { mode: "thresholds" } }),
     S("Schlaf", "aw_whoop_sleep_hours * 3600", "", { unit: HRS, thresholds: SLEEP, w: 3, h: 4, color: { mode: "thresholds" } }),
@@ -78,6 +89,7 @@ const DASHBOARDS = [
     S("Atemfrequenz", "aw_whoop_respiratory_rate", "", { unit: "none", w: 3, h: 4, thresholds: RESP, color: { mode: "thresholds" } }),
     S("Schlaf-Effizienz", "aw_whoop_sleep_efficiency_percent", "", { unit: "percent", w: 3, h: 4, thresholds: PERF, color: { mode: "thresholds" } }),
     S("SpO₂", "aw_whoop_spo2_percent", "", { unit: "percent", w: 3, h: 4, thresholds: SPO2, color: { mode: "thresholds" } }),
+    header("Erholung und Schlafphasen", "Tageswerte werden als Balken gezeigt, damit Ausreisser und Muster sofort scanbar sind."),
     // ── headline trends ──
     bgauge("Recovery — Verlauf (30 Tage)", "aw_whoop_recovery_by_day", "{{day}}", { unit: "percent", max: 100, thresholds: RECOV, orient: "vertical", w: 24, h: 8 }),
     barStack("Schlaf & Phasen — Verlauf (30 Tage)", [
@@ -86,6 +98,7 @@ const DASHBOARDS = [
       ["aw_whoop_sleep_light_by_day", "Leicht", "#4dabf7"],
       ["aw_whoop_sleep_awake_by_day", "Wach", "#868e96"],
     ], { unit: "h", w: 24, h: 8 }),
+    header("Zusammenhaenge", "Kombinierte Grafiken zeigen, ob Schlaf, Recovery, Puls und Belastung zusammenlaufen oder auseinanderdriften."),
     // ── combined charts (WHOOP-style: related metrics in one graphic) ──
     barGroup("HRV & Ruhepuls — kombiniert", [
       ["aw_whoop_hrv_by_day", "HRV (ms)", "#37b24d"],
@@ -123,22 +136,26 @@ const DASHBOARDS = [
   ] },
   // ───────────────────────── 12 · Cognitor (time & focus) ─────────────────────
   { uid: "aw-computer", title: "12 · Cognitor — Zeit & Fokus", tags: ["aw", "cognitor", "activity"], time: "now-14d", panels: [
+    header("Cognitor Heute", "Arbeitszeit, aktive Zeit, AFK und iPhone-Zeit als schnelle Tagesdiagnose."),
     S("⏱ Heute gearbeitet", "aw_work_seconds_today", "", { unit: HRS, bg: true, w: 6, h: 7, thresholds: { mode: "absolute", steps: [{ value: null, color: "blue" }, { value: 14400, color: "green" }, { value: 36000, color: "orange" }] }, color: { mode: "thresholds" } }),
     S("Aktive Zeit heute", "aw_active_seconds_today", "", { unit: HRS, bg: true, w: 6, h: 7, color: { mode: "fixed", fixedColor: "purple" } }),
     gauge("Aktiv-Anteil heute", "aw_active_ratio_today * 100", "", { unit: "percent", max: 100, thresholds: HI_GOOD, w: 4, h: 7 }),
     S("AFK heute", "aw_afk_seconds_today", "", { unit: HRS, w: 4, h: 7 }),
     S("iPhone heute", "aw_ios_screen_seconds_today", "", { unit: HRS, w: 4, h: 7 }),
+    header("Zeitquellen", "Gruppen, Geraete, Apps und Domains nebeneinander, damit die groessten Zeitfresser sichtbar sind."),
     pie("Zeit je Gruppe", "aw_time_by_group_seconds_today", "{{group}}", { unit: HRS, w: 8, h: 8 }),
     bgauge("Zeit je Quelle / Gerät (Cognitor)", "aw_time_by_source_seconds_today", "{{source}}", { unit: HRS, w: 16, h: 8, color: { mode: "continuous-BlPu" } }),
     bgauge("Top Mac-Apps heute", "topk(10, aw_app_seconds_today)", "{{app}}", { unit: HRS, w: 8, h: 8, color: { mode: "continuous-BlPu" } }),
     bgauge("Top Web-Domains heute", "topk(10, aw_web_seconds_today)", "{{domain}}", { unit: HRS, w: 8, h: 8, color: { mode: "continuous-BlPu" } }),
     bgauge("Top iPhone-Apps heute", "topk(10, aw_ios_app_seconds_today)", "{{app}}", { unit: HRS, w: 8, h: 8, color: { mode: "continuous-BlPu" } }),
+    header("Verlauf", "Arbeitszeit und aktive Zeit ueber Tage, damit gute und schlechte Fokus-Tage vergleichbar werden."),
     // trends
     barDay("Arbeitszeit je Tag (h)", "aw_work_hours_by_day", "Arbeit", { unit: "h", w: 12, h: 8, color: { mode: "fixed", fixedColor: "blue" } }),
     barDay("Aktive Zeit je Tag (h)", "aw_active_hours_by_day", "Aktiv", { unit: "h", w: 12, h: 8, color: { mode: "fixed", fixedColor: "purple" } }),
   ] },
   // ───────────────────────── 13 · Presence & Training ─────────────────────────
   { uid: "aw-presence", title: "13 · Presence & Training", tags: ["aw", "presence"], time: "now-7d", panels: [
+    header("Presence und Training", "Aktueller Status, Trainingssignale und Tagesenergie als Kontext zur Arbeits- und Recovery-Lage."),
     tbl("Aktueller Presence-Status", "aw_presence_status_info", "", { w: 12, h: 6 }),
     pie("Zeit je Status heute", "aw_presence_seconds_today", "{{status}}", { unit: HRS, w: 8, h: 6 }),
     S("Status-Code", "aw_presence_status_code", "", { unit: "none", w: 4, h: 6 }),

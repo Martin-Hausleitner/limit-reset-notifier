@@ -12,7 +12,8 @@ const COST = path.join(HOME, "Library/Caches/CodexBar/cost-usage");
 export const PATHS = {
   claudeHistory: path.join(HIST, "claude.json"),
   codexHistory: path.join(HIST, "codex.json"),
-  codexCost: path.join(COST, "codex-v6.json"),
+  codexCost: path.join(COST, "codex-v8.json"),
+  codexCostLegacy: path.join(COST, "codex-v6.json"),
   claudeCost: path.join(COST, "claude-v2.json"),
   claudeConfig: path.join(HOME, ".claude.json"),
 };
@@ -24,6 +25,7 @@ function readJson(p) {
     return null;
   }
 }
+const readFirstJson = (...paths) => paths.map(readJson).find(Boolean) || null;
 
 function localDayKey(d = new Date()) {
   const off = d.getTimezoneOffset();
@@ -141,7 +143,7 @@ function buildProvider(id, label, latestEntries, now) {
 
 // ---- Consumption (best-effort, clearly labelled "approx") -------------------
 function codexTokensToday(now = new Date()) {
-  const data = readJson(PATHS.codexCost);
+  const data = readFirstJson(PATHS.codexCost, PATHS.codexCostLegacy);
   const day = data?.days?.[localDayKey(now)];
   if (!day) return 0;
   let tokens = 0;
@@ -183,6 +185,15 @@ export function getSnapshot(now = Date.now()) {
   const prefKey = codexHist?.preferredAccountKey;
   const codexBuckets = (prefKey && codexHist?.accounts?.[prefKey]) || [];
   const codexLatest = latestPerBucket(codexBuckets, now);
+  const codexAccounts = Object.entries(codexHist?.accounts || {}).map(([key, buckets], idx) => {
+    const short = key.split(":").pop()?.slice(0, 8) || `acct${idx + 1}`;
+    return {
+      key,
+      short,
+      preferred: key === prefKey,
+      ...buildProvider("codex", key === prefKey ? `Codex preferred (${short})` : `Codex ${short}`, latestPerBucket(buckets, now), now),
+    };
+  }).filter((a) => a.windows.length);
 
   const tier = claudeTier();
   const claudeLabel = tier ? `Claude Code (${tier.replace(/_/g, " ")})` : "Claude Code";
@@ -199,6 +210,9 @@ export function getSnapshot(now = Date.now()) {
     tier,
     dataCapturedAt,
     providers,
+    accounts: {
+      codex: codexAccounts,
+    },
     consumption: {
       today: {
         codexTokensApprox: codexTokensToday(new Date(now)),

@@ -72,15 +72,15 @@ if (awInfo.includes("version")) {
 // 6. dashboards present — heal: rebuild if any missing
 let search = curl(`http://${AUTH}@127.0.0.1:3300/api/search?type=dash-db`);
 let dashCount = (search.match(/"uid"/g) || []).length;
-const EXTRA_UIDS = ["aw-whoop-lab", "ai-agents", "lrn-weekly", "lrn-index"];
+const EXTRA_UIDS = ["aw-whoop-lab", "ai-agents", "daily-control", "ai-big-display", "lrn-weekly", "lrn-index"];
 const missing = [...AI_UIDS, ...AW_UIDS, ...EXTRA_UIDS].filter((u) => !search.includes(`"${u}"`));
 if (missing.length) {
-  for (const b of ["grafana-build-all", "grafana-build-aw", "grafana-build-whoop-lab", "grafana-build-agents", "grafana-build-weekly", "grafana-build-index"])
+  for (const b of ["grafana-build-all", "grafana-build-aw", "grafana-build-whoop-lab", "grafana-build-agents", "grafana-build-fusion", "grafana-build-big-display", "grafana-build-weekly", "grafana-build-index"])
     sh(`GRAFANA_URL=${GRAF} GRAFANA_DS_UID=prometheus node scripts/${b}.mjs`);
   search = curl(`http://${AUTH}@127.0.0.1:3300/api/search?type=dash-db`);
   dashCount = (search.match(/"uid"/g) || []).length;
 }
-add("dashboards_all", dashCount >= 17, `${dashCount} dashboards`);
+add("dashboards_all", dashCount >= 19, `${dashCount} dashboards`);
 
 // 7. home dashboard = Übersicht/Launcher — heal
 const prefs = curl(`http://${AUTH}@127.0.0.1:3300/api/org/preferences`);

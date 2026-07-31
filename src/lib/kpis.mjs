@@ -12,6 +12,7 @@ const readJson = (p) => {
     return null;
   }
 };
+const readFirstJson = (...paths) => paths.map(readJson).find(Boolean) || null;
 const esc = (v) => String(v).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 const line = (name, labels, value) =>
   `${name}{${Object.entries(labels)
@@ -117,7 +118,7 @@ export function buildKpiProm(now = Date.now()) {
   }
 
   // ---------- CODEX (per-day per-model triples) ----------
-  const codex = readJson(path.join(COST, "codex-v6.json"));
+  const codex = readFirstJson(path.join(COST, "codex-v8.json"), path.join(COST, "codex-v6.json"));
   const codexDays = Object.entries(codex?.days || {});
   const codexModels = [...new Set(codexDays.flatMap(([, m]) => Object.keys(m)))].sort();
   for (const [day, models] of codexDays)
@@ -128,8 +129,15 @@ export function buildKpiProm(now = Date.now()) {
       emit("airate_codex_tokens_by_day", "", { ...L, type: "cached" }, arr[1] || 0);
       emit("airate_codex_cost_by_day", "Codex cost proxy (micros) per day by model", L, arr[2] || 0);
     }
+  for (const [day, models] of codexDays) {
+    let total = 0, cached = 0, cost = 0;
+    for (const arr of Object.values(models)) if (Array.isArray(arr)) { total += arr[0] || 0; cached += arr[1] || 0; cost += arr[2] || 0; }
+    emit("airate_system_tokens_by_day", "Daily tokens by system from CodexBar", { system: "codex", day }, total);
+    emit("airate_system_cached_tokens_by_day", "Daily cached tokens by system from CodexBar", { system: "codex", day }, cached);
+    emit("airate_system_cost_proxy_by_day", "Daily cost proxy by system from CodexBar", { system: "codex", day }, cost);
+  }
   for (const model of codexModels)
-    for (const win of WINDOWS) {
+  for (const win of WINDOWS) {
       let tot = 0, cached = 0, cost = 0, days = 0;
       for (const [day, models] of codexDays) {
         if (!inWindow(day, win)) continue;
@@ -143,6 +151,17 @@ export function buildKpiProm(now = Date.now()) {
       emit("airate_codex_cost_window", "Codex cost proxy (micros) in window by model", { provider: "codex", model, window: win }, cost);
       emit("airate_cache_hit_ratio", "", L, ratio(cached, tot));
     }
+
+  for (const day of claudeDays) {
+    const sub = rows.filter((r) => r.dayKey === day);
+    const total = sum(sub, "input") + sum(sub, "output") + sum(sub, "cacheRead") + sum(sub, "cacheCreate");
+    emit("airate_system_tokens_by_day", "Daily tokens by system from CodexBar", { system: "claude", day }, total);
+    emit("airate_system_cached_tokens_by_day", "Daily cached tokens by system from CodexBar", { system: "claude", day }, sum(sub, "cacheRead"));
+    emit("airate_system_cost_usd_by_day", "Daily cost (USD) by system from CodexBar", { system: "claude", day }, round(sum(sub, "costNanos") / 1e9, 4));
+    emit("airate_system_requests_by_day", "Daily requests by system from CodexBar", { system: "claude", day }, sub.length);
+    emit("airate_system_sessions_by_day", "Daily sessions by system from CodexBar", { system: "claude", day }, new Set(sub.map((r) => r.sessionId)).size);
+  }
+  emit("airate_system_tokens_by_day", "Daily tokens by system from CodexBar", { system: "agy", day: today }, 0);
 
   const out = ["# limit-reset-notifier — derived usage/cost KPIs"];
   let count = 0;

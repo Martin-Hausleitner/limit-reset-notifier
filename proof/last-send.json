@@ -1,12 +1,12 @@
 {
-  "sentAt": "2026-05-30T00:55:45.215Z",
+  "sentAt": "2026-07-10T13:48:15.185Z",
   "homeserver": "https://vcvm.tail6a40cd.ts.net:3443",
   "sender": "@openclaw:100.120.120.120",
   "room_id": "!IlLldWiwPYWgJXTrfB:100.120.120.120",
-  "event_id": "$uUR3mIBOnyKd0sGNX_g_kpkIiZe8r7-ITjQ0h6sUhuU",
-  "bodyPlain": "🧪 TEST — Limit-Reset (Demo) — 30.05., 02:55 · MHs-MacBook-Pro.local\n\n✅ Codex (gpt-5.5) · Wochenlimit zurückgesetzt → 100% frei\n\nVerfügbares Kontingent (wie viel du verbrauchen kannst):\n• Claude Code\n   - Session-Limit (5h): 57% frei · Reset-Zeit unbekannt\n   - Opus-Wochenlimit: 87% frei · Reset in 51h 4m (01.06., 06:00)\n   - Wochenlimit: 67% frei · Reset in 51h 4m (01.06., 06:00)\n• Codex (gpt-5.5)\n   - Session-Limit (5h): 100% frei · Reset in 1h 21m (30.05., 04:17)\n   - Wochenlimit: 13% frei · Reset in 20h 37m (30.05., 23:32)\n\nVerbrauch heute (ca.): Codex 0 Mio Tok · Claude 16,8 Mio Tok / $12.65\n\nLive-Dashboard: https://mpg-mon-bull-austin.trycloudflare.com",
+  "event_id": "$oNdvegKVwIWmYGp5oaaubwuiD4SRvhyWs-ONc_3vOsM",
+  "bodyPlain": "🔔 KI-Limit zurückgesetzt — 10.07., 15:48 · MHs-MacBook-Pro.local\n\n✅ Claude Code · Session-Limit (5h) zurückgesetzt → 100% frei\n\nVerfügbares Kontingent (wie viel du verbrauchen kannst):\n• Claude Code\n   - Opus-Wochenlimit: 83% frei · Reset-Zeit unbekannt\n   - Session-Limit (5h): 100% frei · Reset in 4h 52m (10.07., 20:40)\n   - Wochenlimit: 60% frei · Reset in 62h 12m (13.07., 06:00)\n• Codex (gpt-5.5)\n   - Session-Limit (5h): 93% frei · Reset in 3h 33m (10.07., 19:21)\n   - Wochenlimit: 96% frei · Reset in 151h 52m (16.07., 23:40)\n\nVerbrauch heute (ca.): Codex 0 Mio Tok · Claude 0 Mio Tok / $0\n\nLive-Dashboard: https://insight-determine-own-soul.trycloudflare.com",
   "readbackEventType": "m.room.message",
   "readbackSender": "@openclaw:100.120.120.120",
-  "readbackOriginTs": 1780102510375,
-  "dashboard": "https://mpg-mon-bull-austin.trycloudflare.com"
+  "readbackOriginTs": 1783691294747,
+  "dashboard": "https://insight-determine-own-soul.trycloudflare.com"
 }
